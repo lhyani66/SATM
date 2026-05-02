@@ -5,6 +5,8 @@
 ![scikit-learn](https://img.shields.io/badge/scikit--learn-1.8-F7931E?logo=scikitlearn&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-27ae60)
 
+**Live demo: [satm.onrender.com](https://satm.onrender.com)**
+
 A web application that uses machine learning to help students manage their academic workload. Describe a task in plain language — the AI classifies it, estimates importance and time, detects the deadline from your words, and builds a prioritized daily schedule automatically.
 
 ---
@@ -82,7 +84,7 @@ SATM/
 
 **1. Clone the repository**
 ```bash
-git clone https://github.com/YOUR-USERNAME/SATM.git
+git clone https://github.com/lhyani66/SATM.git
 cd SATM
 ```
 
