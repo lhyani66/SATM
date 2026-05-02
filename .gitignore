@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.pyo
+instance/
+.env
+debug-*.log
+logo-preview-v1.html
+logo-preview.html
+.DS_Store
+Thumbs.db
+desktop.ini
+.claude/

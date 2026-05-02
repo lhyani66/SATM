@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SATM — Smart Academic Task Manager</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0a0a;
+      color: #d4d4d4;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    .app { max-width: 960px; margin: 0 auto; }
+
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 2rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 0.5px solid #1e1e1e;
+    }
+    .logo {
+      width: 38px; height: 38px;
+      background: #185FA5;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .logo svg { width: 20px; height: 20px; }
+    .header h1 { font-size: 18px; font-weight: 600; color: #fff; letter-spacing: -0.3px; }
+    .header p  { font-size: 12px; color: #3f3f3f; margin-top: 3px; }
+    .header-user { margin-left: auto; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .user-email  { font-size: 11px; color: #3f3f3f; }
+    .btn-logout {
+      font-size: 11px; color: #3f3f3f;
+      background: none; border: 0.5px solid #252525;
+      padding: 5px 10px; border-radius: 6px;
+      cursor: pointer; font-family: 'Inter', sans-serif;
+      transition: color .15s, border-color .15s;
+    }
+    .btn-logout:hover { color: #d4d4d4; border-color: #3f3f3f; }
+
+    /* Layout */
+    .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media (max-width: 640px) { .layout { grid-template-columns: 1fr; } }
+
+    /* Panel */
+    .panel { background: #141414; border: 0.5px solid #1e1e1e; border-radius: 12px; padding: 1.25rem; }
+    .panel-title {
+      font-size: 10px; font-weight: 600; letter-spacing: 0.12em;
+      text-transform: uppercase; color: #3f3f3f;
+      margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;
+    }
+    .panel-title::after { content: ''; flex: 1; height: 0.5px; background: #1e1e1e; }
+
+    /* Form */
+    label { font-size: 12px; color: #3f3f3f; display: block; margin-bottom: 6px; font-weight: 500; }
+    textarea {
+      width: 100%; background: #0f0f0f; border: 0.5px solid #252525;
+      color: #d4d4d4; font-family: 'Inter', sans-serif; font-size: 13px;
+      padding: 10px 12px; border-radius: 8px; resize: none; min-height: 92px;
+      line-height: 1.6; outline: none; transition: border-color .2s;
+    }
+    textarea:focus { border-color: #185FA5; }
+    textarea::placeholder { color: #2a2a2a; }
+
+    .hint { font-size: 11px; color: #2d2d2d; margin-top: 7px; line-height: 1.65; }
+    .hint b { color: #185FA5; font-weight: 500; }
+
+    /* Deadline row */
+    .deadline-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+    .deadline-row label { margin-bottom: 0; flex-shrink: 0; }
+    .deadline-row input[type="number"] {
+      width: 72px; background: #0f0f0f; border: 0.5px solid #252525;
+      color: #d4d4d4; font-family: 'Inter', sans-serif; font-size: 13px;
+      padding: 7px 10px; border-radius: 8px; outline: none; transition: border-color .2s;
+      -moz-appearance: textfield; text-align: center;
+    }
+    .deadline-row input[type="number"]:focus { border-color: #185FA5; }
+    .deadline-row input[type="number"]::-webkit-outer-spin-button,
+    .deadline-row input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+    .dl-unit { font-size: 12px; color: #3f3f3f; flex-shrink: 0; }
+    .dl-auto  { font-size: 10px; color: #185FA5; flex-shrink: 0; display: none; }
+
+    /* Buttons */
+    .btn {
+      width: 100%; margin-top: 10px; padding: 10px;
+      background: #185FA5; color: #fff;
+      font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
+      border: none; border-radius: 8px; cursor: pointer;
+      transition: background .15s, transform .1s; letter-spacing: 0.01em;
+    }
+    .btn:hover   { background: #0C447C; }
+    .btn:active  { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .btn.secondary {
+      background: transparent; color: #185FA5;
+      border: 0.5px solid #185FA5; margin-top: 8px;
+    }
+    .btn.secondary:hover { background: #0f1f30; }
+
+    /* Divider */
+    .divider { height: 0.5px; background: #1e1e1e; margin: 1rem 0; }
+
+    /* Result box */
+    .result-box { display: none; }
+    .result-box.on { display: block; }
+
+    /* Detected fields */
+    .detected-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
+    .detected { background: #0f0f0f; border: 0.5px solid #1e1e1e; border-radius: 8px; padding: 9px 10px; }
+    .detected-top { display: flex; align-items: center; gap: 5px; margin-bottom: 6px; }
+    .detected-k { font-size: 10px; color: #3a3a3a; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; }
+    .ai-badge { font-size: 9px; background: #0f2040; color: #185FA5; border-radius: 3px; padding: 1px 5px; font-weight: 600; letter-spacing: 0.04em; }
+    .detected select {
+      width: 100%; background: #0f0f0f; border: 0.5px solid #252525;
+      color: #fff; font-family: 'Inter', sans-serif; font-size: 12px;
+      font-weight: 500; padding: 4px 6px; border-radius: 6px; outline: none; transition: border-color .2s;
+    }
+    .detected select:focus { border-color: #185FA5; }
+
+    /* Time estimate */
+    .time-row { text-align: center; font-size: 12px; color: #3a3a3a; margin-bottom: 10px; }
+    .time-row span { color: #d4d4d4; font-weight: 500; }
+
+    /* Priority bar */
+    .priority-wrap { margin-bottom: 10px; }
+    .priority-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .priority-label { font-size: 10px; color: #3a3a3a; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 500; }
+    .priority-val { font-size: 14px; font-weight: 500; color: #fff; }
+    .bar-bg { height: 4px; background: #1e1e1e; border-radius: 2px; }
+    .bar-fg { height: 4px; border-radius: 2px; transition: width .6s cubic-bezier(.4,0,.2,1); }
+
+    /* Recommendation */
+    .rec-box {
+      background: #0f0f0f; border: 0.5px solid #1e1e1e;
+      border-left: 2px solid #185FA5; border-radius: 0 8px 8px 0; padding: 10px 13px;
+    }
+    .rec-label { font-size: 10px; font-weight: 600; color: #185FA5; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 5px; }
+    .rec-text  { font-size: 12px; color: #555; line-height: 1.7; }
+    .override-note { font-size: 11px; color: #252525; margin-top: 8px; text-align: center; }
+
+    /* Tabs */
+    .tabs { display: flex; gap: 4px; margin-bottom: 1rem; background: #0f0f0f; border-radius: 8px; padding: 3px; }
+    .tab {
+      flex: 1; text-align: center; font-size: 12px; padding: 6px;
+      border-radius: 6px; cursor: pointer; color: #3f3f3f;
+      transition: all .15s; font-family: 'Inter', sans-serif; border: none; background: none;
+    }
+    .tab.active { background: #141414; color: #d4d4d4; font-weight: 500; border: 0.5px solid #1e1e1e; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Task list */
+    .task-list { display: flex; flex-direction: column; gap: 6px; }
+    .task-item {
+      background: #0f0f0f; border: 0.5px solid #1e1e1e; border-radius: 8px;
+      padding: 10px 12px; display: flex; align-items: center; gap: 10px; transition: border-color .15s;
+    }
+    .task-item:hover { border-color: #2a2a2a; }
+    .task-rank {
+      width: 22px; height: 22px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 500; flex-shrink: 0;
+    }
+    .rank-1 { background: #2a1212; color: #e74c3c; }
+    .rank-2 { background: #2a1e10; color: #e67e22; }
+    .rank-3 { background: #0f2040; color: #185FA5; }
+    .rank-n { background: #1a1a1a; color: #3f3f3f; }
+    .task-name { font-size: 13px; font-weight: 500; color: #ccc; }
+    .task-meta { font-size: 11px; color: #333; margin-top: 2px; }
+    .task-badge { font-size: 10px; font-weight: 500; padding: 2px 9px; border-radius: 10px; flex-shrink: 0; margin-left: auto; }
+    .badge-high   { background: #2a1212; color: #e74c3c; border: 0.5px solid #3a1515; }
+    .badge-medium { background: #2a1e10; color: #e67e22; border: 0.5px solid #3a2510; }
+    .badge-low    { background: #0f2a1a; color: #27ae60; border: 0.5px solid #102a1a; }
+    .task-del {
+      background: none; border: none; color: #252525; cursor: pointer;
+      font-size: 16px; padding: 0 2px; border-radius: 4px; transition: color .15s; flex-shrink: 0; line-height: 1;
+    }
+    .task-del:hover { color: #e74c3c; }
+
+    /* Schedule */
+    .schedule-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 0.5px solid #1a1a1a; }
+    .schedule-row:last-child { border-bottom: none; }
+    .schedule-time { font-size: 12px; color: #333; min-width: 60px; }
+    .schedule-task { font-size: 13px; color: #bbb; flex: 1; }
+    .schedule-dur  { font-size: 12px; color: #333; }
+    .schedule-break { color: #252525 !important; }
+
+    /* Summary */
+    .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 1rem; }
+    .summary-card { background: #0f0f0f; border: 0.5px solid #1e1e1e; border-radius: 8px; padding: 10px; text-align: center; }
+    .summary-val { font-size: 22px; font-weight: 600; color: #fff; }
+    .summary-key { font-size: 10px; color: #333; margin-top: 3px; text-transform: uppercase; letter-spacing: 0.08em; }
+
+    /* Auth overlay */
+    #auth-overlay {
+      position: fixed; inset: 0; background: #0a0a0a;
+      display: flex; align-items: center; justify-content: center; z-index: 100;
+    }
+    .auth-card {
+      background: #141414; border: 0.5px solid #1e1e1e; border-radius: 16px;
+      padding: 2rem; width: 100%; max-width: 360px;
+    }
+    .auth-logo {
+      width: 42px; height: 42px; background: #185FA5; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;
+    }
+    .auth-logo svg { width: 22px; height: 22px; }
+    .auth-title { text-align: center; font-size: 18px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+    .auth-sub   { text-align: center; font-size: 12px; color: #3f3f3f; margin-bottom: 1.5rem; }
+    .field-input {
+      width: 100%; background: #0f0f0f; border: 0.5px solid #252525;
+      color: #d4d4d4; font-family: 'Inter', sans-serif; font-size: 13px;
+      padding: 10px 12px; border-radius: 8px; outline: none;
+      margin-bottom: 8px; transition: border-color .2s; display: block;
+    }
+    .field-input:focus { border-color: #185FA5; }
+    .auth-err  { font-size: 12px; color: #e74c3c; text-align: center; margin-top: 8px; min-height: 16px; }
+    .auth-form { display: none; }
+    .auth-form.active { display: block; }
+    .field-err { font-size: 11px; color: #e74c3c; min-height: 14px; margin: -2px 0 6px 2px; }
+    .pw-reqs { display: none; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
+    .pw-reqs.visible { display: flex; }
+    .pw-req {
+      font-size: 10px; padding: 2px 8px; border-radius: 10px;
+      background: #1a1a1a; color: #3f3f3f; border: 0.5px solid #252525;
+      transition: background .2s, color .2s, border-color .2s;
+    }
+    .pw-req.ok   { background: #0f2a1a; color: #27ae60; border-color: #1a3a25; }
+    .pw-req.fail { background: #2a0f0f; color: #e74c3c; border-color: #3a1515; }
+  </style>
+</head>
+<body>
+
+  <!-- ── Auth overlay ─────────────────────────────────────────────────────── -->
+  <div id="auth-overlay">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 11 12 14 22 4"/>
+          <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+        </svg>
+      </div>
+      <div class="auth-title">SATM</div>
+      <div class="auth-sub">Smart Academic Task Manager</div>
+      <div class="tabs" style="margin-bottom:1.25rem">
+        <button class="tab active" onclick="switchAuthTab('login',this)">Sign in</button>
+        <button class="tab" onclick="switchAuthTab('register',this)">Register</button>
+      </div>
+      <div id="auth-login" class="auth-form active">
+        <input id="login-email"    class="field-input" type="email"    placeholder="Email"    autocomplete="email" />
+        <input id="login-password" class="field-input" type="password" placeholder="Password" autocomplete="current-password" />
+        <button id="login-btn" class="btn" style="margin-top:4px" onclick="doLogin()">Sign in</button>
+      </div>
+      <div id="auth-register" class="auth-form">
+        <input id="reg-email" class="field-input" type="email" placeholder="Email" autocomplete="email" oninput="liveEmailCheck()" onblur="liveEmailCheck(true)" />
+        <div class="field-err" id="err-email"></div>
+        <input id="reg-password" class="field-input" type="password" placeholder="Password" autocomplete="new-password" oninput="livePasswordCheck()" />
+        <div class="pw-reqs" id="pw-reqs">
+          <span class="pw-req" id="pr-len">8+ characters</span>
+          <span class="pw-req" id="pr-up">uppercase</span>
+          <span class="pw-req" id="pr-low">lowercase</span>
+          <span class="pw-req" id="pr-num">number</span>
+          <span class="pw-req" id="pr-sp">special char</span>
+        </div>
+        <button id="reg-btn" class="btn" style="margin-top:4px" onclick="doRegister()">Create account</button>
+      </div>
+      <div id="auth-err" class="auth-err"></div>
+    </div>
+  </div>
+
+  <!-- ── Main app ─────────────────────────────────────────────────────────── -->
+  <div class="app" id="main-app" style="display:none">
+
+    <div class="header">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 11 12 14 22 4"/>
+          <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
+        </svg>
+      </div>
+      <div>
+        <h1>Smart Academic Task Manager</h1>
+        <p>AI-powered task analysis &amp; scheduling</p>
+      </div>
+      <div class="header-user">
+        <span class="user-email" id="user-email"></span>
+        <button class="btn-logout" onclick="doLogout()">Sign out</button>
+      </div>
+    </div>
+
+    <div class="layout">
+
+      <!-- Left panel: Input -->
+      <div>
+        <div class="panel">
+          <div class="panel-title">New task</div>
+          <label>Describe your task</label>
+          <textarea id="inp" placeholder="Write naturally — e.g. &quot;need to finish bio hw ASAP, exam is tomorrow&quot;" oninput="autoDeadline(this.value)"></textarea>
+          <div class="hint">Try keywords like <b>ASAP</b>, <b>today</b>, <b>tomorrow</b>, <b>urgent</b>, <b>exam</b>, <b>quiz</b>, <b>project</b></div>
+          <div class="deadline-row">
+            <label>Deadline</label>
+            <input type="number" id="inp-dl" min="1" max="365" value="3" />
+            <span class="dl-unit">days</span>
+            <span class="dl-auto" id="dl-auto-badge">auto-detected</span>
+          </div>
+          <button id="analyze-btn" class="btn" onclick="analyze()">Analyze task</button>
+          <div id="analyze-err" style="font-size:11px;color:#e74c3c;margin-top:6px;min-height:14px;"></div>
+
+          <div class="result-box" id="res">
+            <div class="divider"></div>
+            <div class="panel-title">Detected by AI — adjust if needed</div>
+
+            <div class="detected-grid">
+              <div class="detected">
+                <div class="detected-top"><span class="detected-k">Category</span><span class="ai-badge">AI</span></div>
+                <select id="r-cat">
+                  <option value="Homework">Homework</option>
+                  <option value="Exam">Exam</option>
+                  <option value="Quiz">Quiz</option>
+                  <option value="Project">Project</option>
+                </select>
+              </div>
+              <div class="detected">
+                <div class="detected-top"><span class="detected-k">Importance</span><span class="ai-badge">AI</span></div>
+                <select id="r-imp">
+                  <option value="high">High</option>
+                  <option value="medium">Medium</option>
+                  <option value="low">Low</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="time-row">Estimated time: <span id="r-time">—</span></div>
+
+            <div class="priority-wrap">
+              <div class="priority-top">
+                <span class="priority-label">Priority score</span>
+                <span class="priority-val" id="r-pri">—</span>
+              </div>
+              <div class="bar-bg"><div class="bar-fg" id="r-bar" style="width:0%"></div></div>
+            </div>
+
+            <div class="rec-box">
+              <div class="rec-label">Recommendation</div>
+              <div class="rec-text" id="r-rec"></div>
+            </div>
+            <div class="override-note">Auto-filled by AI · you can override before adding</div>
+            <button id="add-btn" class="btn secondary" onclick="addTask()">+ Add to task list</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right panel: Queue + Summary -->
+      <div style="display:flex;flex-direction:column;gap:1rem;">
+        <div class="panel" style="flex:1;">
+          <div class="tabs">
+            <button class="tab active" onclick="switchTab('tasks',this)">Task queue</button>
+            <button class="tab" onclick="switchTab('schedule',this)">Schedule</button>
+          </div>
+          <div class="tab-content active" id="tab-tasks">
+            <div class="task-list" id="tlist">
+              <div style="color:#2a2a2a;font-size:13px;padding:10px 0;">No tasks yet.</div>
+            </div>
+          </div>
+          <div class="tab-content" id="tab-schedule">
+            <div style="color:#2a2a2a;font-size:13px;padding:10px 0;">No tasks scheduled.</div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-title">Summary</div>
+          <div class="summary-grid">
+            <div class="summary-card"><div class="summary-val" id="s-t">0</div><div class="summary-key">Tasks</div></div>
+            <div class="summary-card"><div class="summary-val" id="s-h">0</div><div class="summary-key">Hours</div></div>
+            <div class="summary-card"><div class="summary-val" style="color:#e74c3c" id="s-u">0</div><div class="summary-key">Urgent</div></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    let currentUser = null;
+
+    // ── Deadline auto-detection ────────────────────────────────────────────────
+    const _DL_WORD = {one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,a:1,an:1};
+    const _DL_WORD_RE = Object.entries(_DL_WORD).map(([w, n]) => ({
+      days:  new RegExp(`in\\s+${w}\\s+days?`),
+      weeks: new RegExp(`in\\s+${w}\\s+weeks?`),
+      num: n,
+    }));
+    const _RE_IN_MONTH  = /in\s+a\s+month/;
+    const _RE_NEXT_WEEK = /next\s+week/;
+    const _RE_NEXT_MON  = /next\s+month/;
+
+    function detectDeadline(text) {
+      const t = text.toLowerCase();
+
+      if (/\b(asap|urgent|right now|due now|due today|today|tonight)\b/.test(t)) return 1;
+      if (/\btomorrow\b/.test(t)) return 2;
+
+      let m;
+      m = t.match(/in\s+(\d+)\s+days?/);   if (m) return parseInt(m[1]);
+      m = t.match(/(\d+)\s+days?\b/);       if (m) return parseInt(m[1]);
+      m = t.match(/in\s+(\d+)\s+weeks?/);   if (m) return parseInt(m[1]) * 7;
+      m = t.match(/(\d+)\s+weeks?\b/);      if (m) return parseInt(m[1]) * 7;
+      m = t.match(/in\s+(\d+)\s+months?/);  if (m) return parseInt(m[1]) * 30;
+      m = t.match(/(\d+)\s+months?\b/);     if (m) return parseInt(m[1]) * 30;
+
+      for (const {days, weeks, num} of _DL_WORD_RE) {
+        if (days.test(t))  return num;
+        if (weeks.test(t)) return num * 7;
+      }
+
+      if (_RE_IN_MONTH.test(t))  return 30;
+      if (_RE_NEXT_WEEK.test(t)) return 7;
+      if (_RE_NEXT_MON.test(t))  return 30;
+      return null;
+    }
+
+    let _dlTimer;
+    function autoDeadline(text) {
+      clearTimeout(_dlTimer);
+      _dlTimer = setTimeout(() => {
+        const detected = detectDeadline(text);
+        const badge = document.getElementById('dl-auto-badge');
+        if (detected) {
+          document.getElementById('inp-dl').value = detected;
+          badge.style.display = 'inline';
+        } else {
+          badge.style.display = 'none';
+        }
+      }, 200);
+    }
+
+    // ── Boot ───────────────────────────────────────────────────────────────────
+    async function init() {
+      const res = await fetch('/api/me');
+      if (res.ok) {
+        currentUser = (await res.json()).email;
+        showApp();
+        loadTasks();
+      }
+      // auth overlay is already visible by default
+    }
+
+    function showApp() {
+      document.getElementById('auth-overlay').style.display = 'none';
+      document.getElementById('main-app').style.display = 'block';
+      document.getElementById('user-email').textContent = currentUser;
+    }
+
+    function showAuth() {
+      document.getElementById('auth-overlay').style.display = 'flex';
+      document.getElementById('main-app').style.display = 'none';
+    }
+
+    // ── Auth ───────────────────────────────────────────────────────────────────
+    function switchAuthTab(name, el) {
+      el.closest('.tabs').querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById('auth-' + name).classList.add('active');
+      document.getElementById('auth-err').textContent = '';
+      document.getElementById('err-email').textContent = '';
+      document.getElementById('pw-reqs').classList.remove('visible');
+      document.querySelectorAll('.pw-req').forEach(r => r.classList.remove('ok','fail'));
+    }
+
+    async function doLogin() {
+      const email    = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      if (!email || !password) return;
+      const btn = document.getElementById('login-btn');
+      btn.disabled = true; btn.textContent = 'Signing in…';
+      try {
+        const res  = await fetch('/api/login', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email, password}) });
+        const data = await res.json();
+        if (res.ok) { currentUser = data.email; showApp(); loadTasks(); }
+        else document.getElementById('auth-err').textContent = data.error;
+      } finally { btn.disabled = false; btn.textContent = 'Sign in'; }
+    }
+
+    function liveEmailCheck(onBlur = false) {
+      const val = document.getElementById('reg-email').value.trim();
+      const err = document.getElementById('err-email');
+      if (!val) { err.textContent = onBlur ? 'Email is required' : ''; return !onBlur; }
+      const ok = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(val);
+      err.textContent = ok ? '' : 'Enter a valid email address (e.g. name@domain.com)';
+      return ok;
+    }
+
+    function livePasswordCheck(markFailed = false) {
+      const val = document.getElementById('reg-password').value;
+      const reqs = document.getElementById('pw-reqs');
+      reqs.classList.toggle('visible', val.length > 0);
+      const checks = {
+        'pr-len': val.length >= 8,
+        'pr-up':  /[A-Z]/.test(val),
+        'pr-low': /[a-z]/.test(val),
+        'pr-num': /[0-9]/.test(val),
+        'pr-sp':  /[^A-Za-z0-9]/.test(val),
+      };
+      let allOk = true;
+      for (const [id, ok] of Object.entries(checks)) {
+        const el = document.getElementById(id);
+        el.classList.toggle('ok', ok);
+        el.classList.toggle('fail', !ok && markFailed);
+        if (!ok) allOk = false;
+      }
+      return allOk;
+    }
+
+    async function doRegister() {
+      const email    = document.getElementById('reg-email').value.trim();
+      const password = document.getElementById('reg-password').value;
+      const emailOk  = liveEmailCheck(true);
+      const passOk   = password ? livePasswordCheck(true) : false;
+      if (!password) document.getElementById('auth-err').textContent = 'Password is required';
+      if (!emailOk || !passOk) return;
+      document.getElementById('auth-err').textContent = '';
+      const btn = document.getElementById('reg-btn');
+      btn.disabled = true; btn.textContent = 'Creating…';
+      try {
+        const res  = await fetch('/api/register', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email, password}) });
+        const data = await res.json();
+        if (res.ok) { currentUser = data.email; showApp(); loadTasks(); }
+        else document.getElementById('auth-err').textContent = data.error;
+      } finally { btn.disabled = false; btn.textContent = 'Create account'; }
+    }
+
+    async function doLogout() {
+      await fetch('/api/logout', { method:'POST' });
+      currentUser = null;
+      renderTasks([]);
+      document.getElementById('inp').value = '';
+      document.getElementById('inp-dl').value = '3';
+      document.getElementById('dl-auto-badge').style.display = 'none';
+      document.getElementById('res').classList.remove('on');
+      document.getElementById('analyze-err').textContent = '';
+      showAuth();
+    }
+
+    // Enter key submits the visible auth form
+    document.addEventListener('keydown', e => {
+      if (e.key !== 'Enter') return;
+      if (document.getElementById('auth-login').classList.contains('active'))    doLogin();
+      else if (document.getElementById('auth-register').classList.contains('active')) doRegister();
+    });
+
+    // ── Tasks ──────────────────────────────────────────────────────────────────
+    async function loadTasks() {
+      const res = await fetch('/api/tasks');
+      if (!res.ok) return;
+      renderTasks(await res.json());
+    }
+
+    function calcPriority(dl, imp) {
+      const p = 50
+        + (imp === 'high' ? 25 : imp === 'low' ? -20 : 0)
+        + (dl <= 1 ? 30 : dl <= 2 ? 20 : dl <= 3 ? 10 : dl <= 5 ? 5 : 0);
+      return Math.min(100, Math.max(5, p));
+    }
+
+    function esc(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function dlStr(d) { return d === 1 ? 'today' : d === 2 ? 'tomorrow' : d + ' days'; }
+
+    function renderTasks(tasks) {
+      const sorted = [...tasks].sort((a, b) => calcPriority(b.deadline, b.importance) - calcPriority(a.deadline, a.importance));
+      const rankCls  = i => ['rank-1','rank-2','rank-3'][i] || 'rank-n';
+      const badgeCls = { high:'badge-high', medium:'badge-medium', low:'badge-low' };
+      const badgeLbl = { high:'High', medium:'Medium', low:'Low' };
+
+      document.getElementById('tlist').innerHTML = sorted.length
+        ? sorted.map((t, i) => `
+            <div class="task-item">
+              <div class="task-rank ${rankCls(i)}">${i + 1}</div>
+              <div style="flex:1">
+                <div class="task-name">${esc(t.task_text.slice(0,50))}</div>
+                <div class="task-meta">${esc(t.category||'—')} · ${dlStr(t.deadline||3)} · ${t.time_est||'?'} hrs</div>
+              </div>
+              <span class="task-badge ${badgeCls[t.importance]||'badge-medium'}">${badgeLbl[t.importance]||esc(t.importance)}</span>
+              <button class="task-del" onclick="deleteTask(${t.id})" title="Remove">×</button>
+            </div>`).join('')
+        : '<div style="color:#2a2a2a;font-size:13px;padding:10px 0;">No tasks yet.</div>';
+
+      const urg = tasks.filter(t => t.deadline <= 2 || t.importance === 'high').length;
+      const hrs = tasks.reduce((s, t) => s + (t.time_est || 0), 0);
+      document.getElementById('s-t').textContent = tasks.length;
+      document.getElementById('s-h').textContent = Number.isInteger(hrs) ? hrs : hrs.toFixed(1);
+      document.getElementById('s-u').textContent = urg;
+
+      renderSchedule(sorted);
+    }
+
+    function renderSchedule(sorted) {
+      let t = 9 * 60, sessionMins = 0;
+      const fmt = m => {
+        const h = Math.floor(m / 60), mn = m % 60;
+        return `${h > 12 ? h - 12 : (h || 12)}:${String(mn).padStart(2,'0')} ${h >= 12 ? 'PM' : 'AM'}`;
+      };
+      let html = '';
+      sorted.forEach(task => {
+        if (sessionMins >= 180) {
+          html += `<div class="schedule-row"><div class="schedule-time">${fmt(t)}</div><div class="schedule-task schedule-break">— Break —</div><div class="schedule-dur schedule-break">1 hr</div></div>`;
+          t += 60; sessionMins = 0;
+        }
+        const mins = Math.round((task.time_est || 1) * 60);
+        html += `<div class="schedule-row"><div class="schedule-time">${fmt(t)}</div><div class="schedule-task">${esc(task.task_text.slice(0,40))}</div><div class="schedule-dur">${task.time_est} hrs</div></div>`;
+        t += mins; sessionMins += mins;
+      });
+      document.getElementById('tab-schedule').innerHTML = html
+        || '<div style="color:#2a2a2a;font-size:13px;padding:10px 0;">No tasks scheduled.</div>';
+    }
+
+    async function deleteTask(id) {
+      const res = await fetch('/api/tasks/' + id, { method:'DELETE' });
+      if (res.status === 401) { showAuth(); return; }
+      if (res.ok) loadTasks();
+    }
+
+    // ── Analyze ────────────────────────────────────────────────────────────────
+    async function analyze() {
+      const text = document.getElementById('inp').value.trim();
+      if (!text) return;
+      const deadline = parseInt(document.getElementById('inp-dl').value) || 3;
+      const btn = document.getElementById('analyze-btn');
+      btn.disabled = true; btn.textContent = 'Analyzing…';
+      document.getElementById('analyze-err').textContent = '';
+      try {
+        const res  = await fetch('/api/predict', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({text, deadline}) });
+        if (res.status === 401) { showAuth(); return; }
+        const data = await res.json();
+
+        document.getElementById('r-cat').value   = data.category;
+        document.getElementById('r-imp').value   = data.importance;
+        document.getElementById('r-time').textContent = data.time_est + ' hrs';
+
+        const pri = calcPriority(deadline, data.importance);
+        const col = pri >= 75 ? '#e74c3c' : pri >= 50 ? '#e67e22' : '#27ae60';
+        document.getElementById('r-pri').textContent = pri + '/100';
+        document.getElementById('r-bar').style.cssText = `width:${pri}%;background:${col}`;
+        document.getElementById('r-rec').textContent =
+          pri >= 75 ? 'Start immediately — this is your highest priority. Block focused time today.' :
+          pri >= 50 ? `Schedule within ${dlStr(deadline)}. Work in 45-min focused sessions.` :
+                      'Low urgency — handle after higher-priority tasks are done.';
+        document.getElementById('res').classList.add('on');
+      } catch {
+        document.getElementById('analyze-err').textContent = 'Cannot reach server. Make sure Flask is running.';
+      } finally {
+        btn.disabled = false; btn.textContent = 'Analyze task';
+      }
+    }
+
+    async function addTask() {
+      const text = document.getElementById('inp').value.trim();
+      if (!text) return;
+      const deadline   = parseInt(document.getElementById('inp-dl').value) || 3;
+      const category   = document.getElementById('r-cat').value;
+      const importance = document.getElementById('r-imp').value;
+      const time_est   = parseFloat(document.getElementById('r-time').textContent) || 1;
+      const btn = document.getElementById('add-btn');
+      btn.disabled = true;
+      try {
+        const res = await fetch('/api/tasks', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({task_text:text, category, importance, deadline, time_est}) });
+        if (res.status === 401) { showAuth(); return; }
+        if (res.ok) {
+          document.getElementById('inp').value = '';
+          document.getElementById('res').classList.remove('on');
+          loadTasks();
+        }
+      } finally { btn.disabled = false; }
+    }
+
+    // ── Tab switch ─────────────────────────────────────────────────────────────
+    function switchTab(name, el) {
+      el.closest('.tabs').querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById('tab-' + name).classList.add('active');
+    }
+
+    document.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>
