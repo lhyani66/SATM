@@ -57,13 +57,23 @@ with app.app_context():
 # ── Load ML models ────────────────────────────────────────────────────────────
 MODEL_DIR       = os.path.join(os.path.dirname(__file__), 'models')
 tfidf           = joblib.load(os.path.join(MODEL_DIR, 'tfidf_vectorizer.pkl'))
-cat_model       = joblib.load(os.path.join(MODEL_DIR, 'category_model.pkl'))
+deadline_scaler = joblib.load(os.path.join(MODEL_DIR, 'deadline_scaler.pkl'))
+category_enc    = joblib.load(os.path.join(MODEL_DIR, 'category_encoder.pkl'))
+
+# Category ensemble (classification — TF-IDF only)
+cat_model_rf    = joblib.load(os.path.join(MODEL_DIR, 'category_model.pkl'))
+cat_model_svm   = joblib.load(os.path.join(MODEL_DIR, 'cat_model_svm.pkl'))
+cat_model_gb    = joblib.load(os.path.join(MODEL_DIR, 'cat_model_gb.pkl'))
+
+# Importance ensemble (classification — TF-IDF + deadline)
 imp_model_rf    = joblib.load(os.path.join(MODEL_DIR, 'importance_model.pkl'))
 imp_model_svm   = joblib.load(os.path.join(MODEL_DIR, 'imp_model_svm.pkl'))
 imp_model_gb    = joblib.load(os.path.join(MODEL_DIR, 'imp_model_gb.pkl'))
-time_model      = joblib.load(os.path.join(MODEL_DIR, 'time_model.pkl'))
-deadline_scaler = joblib.load(os.path.join(MODEL_DIR, 'deadline_scaler.pkl'))
-category_enc    = joblib.load(os.path.join(MODEL_DIR, 'category_encoder.pkl'))
+
+# Time ensemble (regression — TF-IDF + encoded category)
+time_model_rf   = joblib.load(os.path.join(MODEL_DIR, 'time_model.pkl'))
+time_model_svr  = joblib.load(os.path.join(MODEL_DIR, 'time_model_svr.pkl'))
+time_model_gb   = joblib.load(os.path.join(MODEL_DIR, 'time_model_gb.pkl'))
 
 # ── Preprocessing ─────────────────────────────────────────────────────────────
 _stop_words = set(stopwords.words('english'))
@@ -88,36 +98,51 @@ def _preprocess(text):
         if t not in _stop_words
     )
 
-def _ensemble_importance(vec_imp):
-    votes = [
-        imp_model_rf.predict(vec_imp)[0].lower(),
-        imp_model_svm.predict(vec_imp)[0].lower(),
-        imp_model_gb.predict(vec_imp.toarray())[0].lower(),
-    ]
-    counts   = {v: votes.count(v) for v in set(votes)}
-    winner   = max(counts, key=counts.get)
-    agreement = counts[winner]          # 2 or 3 out of 3
-    return winner, agreement
+def _majority_vote(votes):
+    counts  = {v: votes.count(v) for v in set(votes)}
+    winner  = max(counts, key=counts.get)
+    return winner, counts[winner]   # (label, agreement count out of 3)
 
 def run_prediction(task_text, deadline):
     vec = tfidf.transform([_preprocess(task_text)])
 
-    category   = cat_model.predict(vec)[0]
+    # Category ensemble (majority vote)
+    cat_votes  = [
+        cat_model_rf.predict(vec)[0],
+        cat_model_svm.predict(vec)[0],
+        cat_model_gb.predict(vec.toarray())[0],
+    ]
+    category, cat_agree = _majority_vote(cat_votes)
 
-    dl_scaled  = deadline_scaler.transform([[deadline]])
-    vec_imp    = hstack([vec, csr_matrix(dl_scaled)])
-    importance, agreement = _ensemble_importance(vec_imp)
+    # Importance ensemble (majority vote)
+    dl_scaled = deadline_scaler.transform([[deadline]])
+    vec_imp   = hstack([vec, csr_matrix(dl_scaled)])
+    imp_votes = [
+        imp_model_rf.predict(vec_imp)[0].lower(),
+        imp_model_svm.predict(vec_imp)[0].lower(),
+        imp_model_gb.predict(vec_imp.toarray())[0].lower(),
+    ]
+    importance, imp_agree = _majority_vote(imp_votes)
 
-    cat_enc    = category_enc.transform([category]).reshape(-1, 1)
-    vec_time   = hstack([vec, csr_matrix(cat_enc)])
-    time_est   = float(time_model.predict(vec_time)[0])
-    time_est   = round(max(0.5, min(8.0, time_est)), 1)
+    # Time ensemble (average of three regressors, then clamp)
+    cat_enc   = category_enc.transform([category]).reshape(-1, 1)
+    vec_time  = hstack([vec, csr_matrix(cat_enc)])
+    time_preds = [
+        float(time_model_rf.predict(vec_time)[0]),
+        float(time_model_svr.predict(vec_time)[0]),
+        float(time_model_gb.predict(vec_time.toarray())[0]),
+    ]
+    time_est = round(max(0.5, min(8.0, sum(time_preds) / 3)), 1)
+    # Spread between highest and lowest estimate (rounded to 1 dp)
+    time_spread = round(max(time_preds) - min(time_preds), 1)
 
     return {
-        'category':   category,
-        'importance': importance,
-        'time_est':   time_est,
-        'agreement':  agreement,
+        'category':    category,
+        'cat_agree':   cat_agree,
+        'importance':  importance,
+        'imp_agree':   imp_agree,
+        'time_est':    time_est,
+        'time_spread': time_spread,
     }
 
 # ── Auth helpers ──────────────────────────────────────────────────────────────

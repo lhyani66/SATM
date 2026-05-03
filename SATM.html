@@ -332,7 +332,7 @@
 
             <div class="detected-grid">
               <div class="detected">
-                <div class="detected-top"><span class="detected-k">Category</span><span class="ai-badge">AI</span></div>
+                <div class="detected-top"><span class="detected-k">Category</span><span class="ai-badge">AI</span><span id="r-cat-agree" style="display:none;font-size:10px;padding:1px 6px;border-radius:8px;font-weight:600;margin-left:4px;"></span></div>
                 <select id="r-cat">
                   <option value="Homework">Homework</option>
                   <option value="Exam">Exam</option>
@@ -341,7 +341,7 @@
                 </select>
               </div>
               <div class="detected">
-                <div class="detected-top"><span class="detected-k">Importance</span><span class="ai-badge">AI</span></div>
+                <div class="detected-top"><span class="detected-k">Importance</span><span class="ai-badge">AI</span><span id="r-imp-agree" style="display:none;font-size:10px;padding:1px 6px;border-radius:8px;font-weight:600;margin-left:4px;"></span></div>
                 <select id="r-imp">
                   <option value="high">High</option>
                   <option value="medium">Medium</option>
@@ -350,7 +350,7 @@
               </div>
             </div>
 
-            <div class="time-row">Estimated time: <span id="r-time">—</span> &nbsp;<span id="r-agree" style="display:none;font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600;vertical-align:middle;"></span></div>
+            <div class="time-row">Estimated time: <span id="r-time">—</span> &nbsp;<span id="r-time-spread" style="display:none;font-size:11px;padding:2px 8px;border-radius:10px;font-weight:600;vertical-align:middle;"></span></div>
 
             <div class="priority-wrap">
               <div class="priority-top">
@@ -559,7 +559,9 @@
       document.getElementById('dl-auto-badge').style.display = 'none';
       document.getElementById('res').classList.remove('on');
       document.getElementById('analyze-err').textContent = '';
-      document.getElementById('r-agree').style.display = 'none';
+      ['r-cat-agree','r-imp-agree','r-time-spread'].forEach(id => {
+        document.getElementById(id).style.display = 'none';
+      });
       showAuth();
     }
 
@@ -661,15 +663,25 @@
         document.getElementById('r-imp').value   = data.importance;
         document.getElementById('r-time').textContent = data.time_est + ' hrs';
 
-        const agreeEl = document.getElementById('r-agree');
-        if (data.agreement != null) {
-          const confident = data.agreement === 3;
-          agreeEl.textContent = confident ? '3/3 models agree' : '2/3 models agree';
-          agreeEl.style.display   = 'inline-block';
-          agreeEl.style.background = confident ? 'rgba(39,174,96,0.18)' : 'rgba(230,126,34,0.18)';
-          agreeEl.style.color      = confident ? '#27ae60' : '#e67e22';
+        function setAgreeBadge(el, count) {
+          const confident = count === 3;
+          el.textContent = confident ? '3/3 agree' : '2/3 agree';
+          el.style.display    = 'inline-block';
+          el.style.background = confident ? 'rgba(39,174,96,0.18)' : 'rgba(230,126,34,0.18)';
+          el.style.color      = confident ? '#27ae60' : '#e67e22';
+        }
+        if (data.cat_agree != null) setAgreeBadge(document.getElementById('r-cat-agree'), data.cat_agree);
+        if (data.imp_agree != null) setAgreeBadge(document.getElementById('r-imp-agree'), data.imp_agree);
+
+        const spreadEl = document.getElementById('r-time-spread');
+        if (data.time_spread != null) {
+          const stable = data.time_spread <= 0.5;
+          spreadEl.textContent    = stable ? 'models agree' : `±${data.time_spread} hr spread`;
+          spreadEl.style.display  = 'inline-block';
+          spreadEl.style.background = stable ? 'rgba(39,174,96,0.18)' : 'rgba(230,126,34,0.18)';
+          spreadEl.style.color      = stable ? '#27ae60' : '#e67e22';
         } else {
-          agreeEl.style.display = 'none';
+          spreadEl.style.display = 'none';
         }
 
         const pri = calcPriority(deadline, data.importance);
