@@ -263,6 +263,21 @@ def update_task(task_id):
     db.session.commit()
     return jsonify({'message': 'Updated'}), 200
 
+# ── Temporary admin dump (remove after use) ───────────────────────────────────
+@app.route('/admin/dump')
+def admin_dump():
+    if request.args.get('key') != 'satm-admin-2026':
+        return jsonify({'error': 'forbidden'}), 403
+    users = User.query.all()
+    result = []
+    for u in users:
+        tasks = [{'id': t.id, 'task_text': t.task_text, 'category': t.category,
+                  'importance': t.importance, 'deadline': t.deadline,
+                  'time_est': t.time_est, 'status': t.status,
+                  'created_at': str(t.created_at)} for t in u.tasks]
+        result.append({'id': u.id, 'email': u.email, 'tasks': tasks})
+    return jsonify(result), 200
+
 # ── Serve the frontend ────────────────────────────────────────────────────────
 @app.route('/')
 def index():
