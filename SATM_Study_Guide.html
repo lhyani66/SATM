@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SATM — Study Guide</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: #1a1a2e;
+    background: #fff;
+    padding: 48px 56px;
+    max-width: 860px;
+    margin: 0 auto;
+  }
+
+  /* ── Cover ───────────────────────────────────── */
+  .cover {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+    color: #fff;
+    border-radius: 14px;
+    padding: 36px 40px 30px;
+    margin-bottom: 40px;
+  }
+  .cover-tag { font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase; color: #7ecbff; margin-bottom: 8px; }
+  .cover h1 { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+  .cover h1 span { color: #7ecbff; }
+  .cover-sub { font-size: 13px; color: #b0c4de; margin-bottom: 20px; }
+  .cover-pills { display: flex; gap: 10px; flex-wrap: wrap; }
+  .pill { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 20px; padding: 3px 12px; font-size: 11px; color: #d0e8ff; }
+
+  /* ── Part headers ────────────────────────────── */
+  .part-header {
+    background: #0f3460;
+    color: #fff;
+    border-radius: 10px;
+    padding: 14px 20px;
+    margin: 36px 0 18px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    page-break-before: always;
+  }
+  .part-header:first-of-type { page-break-before: avoid; }
+  .part-num {
+    background: rgba(255,255,255,0.15);
+    border-radius: 50%;
+    width: 36px; height: 36px;
+    min-width: 36px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700;
+  }
+  .part-title { font-size: 15px; font-weight: 700; }
+  .part-sub { font-size: 11px; color: #b0d4ff; margin-top: 2px; }
+
+  /* ── Section titles ───────────────────────────── */
+  h3 {
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f3460;
+    margin: 20px 0 7px;
+    border-left: 3px solid #7ecbff;
+    padding-left: 9px;
+  }
+
+  /* ── Body ─────────────────────────────────────── */
+  p { margin-bottom: 10px; color: #333; }
+  ul { padding-left: 20px; margin-bottom: 12px; }
+  li { margin-bottom: 5px; color: #333; }
+  strong { color: #0f3460; }
+  em { color: #555; }
+
+  /* ── Code blocks ──────────────────────────────── */
+  .code {
+    background: #f4f6fb;
+    border: 1px solid #dde4f0;
+    border-left: 3px solid #0f3460;
+    border-radius: 0 6px 6px 0;
+    padding: 10px 14px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 12px;
+    color: #16213e;
+    margin: 10px 0;
+    white-space: pre;
+    overflow-x: auto;
+  }
+
+  /* ── Callout ──────────────────────────────────── */
+  .callout {
+    background: #f0f6ff;
+    border-left: 4px solid #0f3460;
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    margin: 14px 0;
+    font-size: 13px;
+    color: #16213e;
+  }
+  .callout strong { color: #0f3460; }
+
+  /* ── Tables ───────────────────────────────────── */
+  table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 12.5px; }
+  th { background: #0f3460; color: #fff; padding: 8px 12px; text-align: left; font-weight: 600; }
+  td { padding: 8px 12px; border-bottom: 1px solid #eef0f7; }
+  tr:nth-child(even) td { background: #f8faff; }
+  tr:last-child td { border-bottom: none; }
+
+  /* ── Step flow ────────────────────────────────── */
+  .steps { margin: 14px 0; }
+  .step { display: flex; gap: 14px; margin-bottom: 14px; align-items: flex-start; }
+  .step-n {
+    min-width: 28px; height: 28px;
+    background: #0f3460; color: #fff;
+    border-radius: 50%;
+    font-size: 12px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .step-body { padding-top: 4px; }
+  .step-title { font-weight: 700; color: #0f3460; }
+
+  /* ── Pipeline diagram ─────────────────────────── */
+  .pipeline { display: flex; gap: 8px; margin: 16px 0; flex-wrap: wrap; }
+  .pipe {
+    flex: 1; min-width: 160px;
+    border: 1.5px solid #dde6f5;
+    border-radius: 10px;
+    padding: 14px;
+    background: #f8faff;
+  }
+  .pipe-lbl { font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase; color: #7ecbff; font-weight: 700; margin-bottom: 4px; }
+  .pipe-name { font-size: 13px; font-weight: 700; color: #0f3460; margin-bottom: 6px; }
+  .pipe-detail { font-size: 11.5px; color: #555; line-height: 1.6; }
+  .pipe-out { margin-top: 8px; background: #0f3460; color: #fff; border-radius: 6px; padding: 4px 8px; font-size: 11px; font-weight: 600; }
+
+  /* ── Accuracy badges ──────────────────────────── */
+  .good { color: #1a8f4e; font-weight: 700; }
+  .ok   { color: #b86b00; font-weight: 700; }
+
+  /* ── Summary table at end ─────────────────────── */
+  .summary {
+    background: linear-gradient(135deg, #1a1a2e, #0f3460);
+    border-radius: 12px;
+    padding: 24px 28px;
+    margin-top: 36px;
+    color: #fff;
+  }
+  .summary h2 { font-size: 14px; letter-spacing: 1px; text-transform: uppercase; color: #7ecbff; margin-bottom: 16px; }
+  .summary table { font-size: 12.5px; }
+  .summary th { background: rgba(255,255,255,0.1); color: #fff; }
+  .summary td { border-bottom: 1px solid rgba(255,255,255,0.08); color: #d0e8ff; }
+  .summary tr:nth-child(even) td { background: rgba(255,255,255,0.04); }
+
+  @media print {
+    body { padding: 28px 36px; }
+    .part-header { page-break-before: always; }
+    .part-header:first-of-type { page-break-before: avoid; }
+    .pipe, .step, table { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Cover -->
+<div class="cover">
+  <div class="cover-tag">Personal Study Guide · May 2026</div>
+  <h1><span>SATM</span> — How It Works, Start to Finish</h1>
+  <div class="cover-sub">Everything you need to know to explain the project confidently. 7 parts, plain language, no fluff.</div>
+  <div class="cover-pills">
+    <span class="pill">Part 1 — What & Why</span>
+    <span class="pill">Part 2 — Tech Stack</span>
+    <span class="pill">Part 3 — Auth</span>
+    <span class="pill">Part 4 — NLP</span>
+    <span class="pill">Part 5 — ML Pipeline</span>
+    <span class="pill">Part 6 — API</span>
+    <span class="pill">Part 7 — Deployment</span>
+  </div>
+</div>
+
+<!-- PART 1 -->
+<div class="part-header">
+  <div class="part-num">1</div>
+  <div>
+    <div class="part-title">What is SATM and Why Does It Exist?</div>
+    <div class="part-sub">The problem, the solution, and the user value</div>
+  </div>
+</div>
+
+<h3>The Problem</h3>
+<p>Students always have a pile of tasks — homework, exams, quizzes, projects. Three questions are always hard to answer:</p>
+<ul>
+  <li>What type of task is this?</li>
+  <li>How important and urgent is it?</li>
+  <li>How long will it take?</li>
+</ul>
+<p>They usually guess. They often get the priority wrong. Important things get left late.</p>
+
+<h3>The Solution</h3>
+<p>You type a task in plain English — exactly how you'd say it to a friend: <em>"finish bio hw ASAP"</em> or <em>"study for the databases exam in 3 days"</em>. The AI reads the sentence and gives you back:</p>
+<ul>
+  <li><strong>Category</strong> — Homework, Exam, Quiz, or Project</li>
+  <li><strong>Importance</strong> — High, Medium, or Low</li>
+  <li><strong>Estimated time</strong> — how many hours it'll take</li>
+  <li><strong>Priority score</strong> — a 0–100 number combining urgency and importance</li>
+  <li><strong>Daily schedule</strong> — auto-generated 45-minute study sessions</li>
+</ul>
+
+<h3>Why AI and not just dropdowns?</h3>
+<p>Because typing is natural and fast. And because the AI can read context — "ASAP" means it's urgent, "bio" means biology, "hw" means homework. A simple form can't do that.</p>
+
+<!-- PART 2 -->
+<div class="part-header">
+  <div class="part-num">2</div>
+  <div>
+    <div class="part-title">The Tech Stack</div>
+    <div class="part-sub">What tools we used and why</div>
+  </div>
+</div>
+
+<p>Think of the project as three layers:</p>
+
+<h3>Layer 1 — Frontend (what the user sees)</h3>
+<p>One file: <strong>SATM.html</strong>. Pure HTML, CSS, and JavaScript — no frameworks. A framework (like React or Vue) is a large pre-built system that changes how you write your entire frontend. We didn't need one — our app has one page and some dynamic updates. A framework would be overkill. Plain JS is simpler, faster to build, and easier to explain.</p>
+
+<h3>Layer 2 — Backend (the brain)</h3>
+<p><strong>Flask</strong> — a Python library (just like NumPy or pandas, installed with pip). What makes it special is what it does: it turns your Python file into a web server. When you run <em>python app.py</em>, Flask starts listening for requests from the browser. You tell it: "if someone visits /api/login, run this function." That's it. Flask is not a separate language or software — it's a Python library that handles internet communication.</p>
+
+<h3>Layer 3 — Database (memory)</h3>
+<p><strong>SQLite</strong> is a database engine — software that stores data in a structured file on disk (<em>satm.db</em>). It understands SQL (the language for databases). It was created independently but is bundled inside every Python installation, so no separate install is needed.</p>
+<p><strong>Flask-SQLAlchemy</strong> is a translator — instead of writing raw SQL commands, you write Python and it converts it to SQL behind the scenes.</p>
+
+<div class="callout">
+  <strong>Simple analogy:</strong> SQLite is like a filing cabinet. SQL is the language you use to ask for files. Flask-SQLAlchemy is the assistant who speaks both Python and SQL so you never have to leave Python.
+</div>
+
+<h3>The AI Layer</h3>
+<ul>
+  <li><strong>scikit-learn</strong> — all ML models (Random Forest, SVM, Gradient Boosting)</li>
+  <li><strong>NLTK</strong> — text preprocessing (tokenization, lemmatization, stopwords)</li>
+  <li><strong>scipy</strong> — efficient math for combining feature matrices</li>
+</ul>
+
+<table>
+  <thead><tr><th>Layer</th><th>Technology</th><th>Role</th></tr></thead>
+  <tbody>
+    <tr><td>Frontend</td><td>HTML + CSS + JS</td><td>What the user sees and interacts with</td></tr>
+    <tr><td>Backend</td><td>Python + Flask</td><td>Processes requests, runs the AI, talks to DB</td></tr>
+    <tr><td>Database</td><td>SQLite + SQLAlchemy</td><td>Stores users and tasks permanently</td></tr>
+    <tr><td>AI / NLP</td><td>scikit-learn + NLTK</td><td>Understands and classifies tasks</td></tr>
+    <tr><td>Deployment</td><td>Render + gunicorn</td><td>Runs the app live, 24/7</td></tr>
+  </tbody>
+</table>
+
+<!-- PART 3 -->
+<div class="part-header">
+  <div class="part-num">3</div>
+  <div>
+    <div class="part-title">Authentication</div>
+    <div class="part-sub">How register, login, and sessions work</div>
+  </div>
+</div>
+
+<h3>Registration Flow</h3>
+<div class="steps">
+  <div class="step"><div class="step-n">1</div><div class="step-body"><span class="step-title">User submits email + password</span> — the frontend validates format and password strength live before even sending anything</div></div>
+  <div class="step"><div class="step-n">2</div><div class="step-body"><span class="step-title">Flask checks for duplicate email</span> — if it already exists, returns error: "account already exists"</div></div>
+  <div class="step"><div class="step-n">3</div><div class="step-body"><span class="step-title">Password is hashed</span> — using Werkzeug. Hashing converts the password into a random-looking irreversible string. The real password is never stored anywhere.</div></div>
+  <div class="step"><div class="step-n">4</div><div class="step-body"><span class="step-title">User saved to database</span> — email + hashed password written to the users table</div></div>
+  <div class="step"><div class="step-n">5</div><div class="step-body"><span class="step-title">Session created</span> — Flask puts the user's ID in an encrypted cookie in the browser. This is how it remembers you're logged in.</div></div>
+</div>
+
+<h3>Login Flow</h3>
+<p>Flask looks up the email, hashes the password the user typed, and compares it to the stored hash. If they match → session created. If not → "invalid email or password." The real password is never compared directly — only the hashes are compared.</p>
+
+<h3>What is a Session?</h3>
+<p>A session is a small encrypted cookie stored in the user's browser. Every request the browser sends includes this cookie. Flask reads it, finds the user ID inside, and knows who is making the request. When you log out, Flask clears the cookie — you become a stranger again.</p>
+
+<h3>@require_auth</h3>
+<p>Every protected route has this decorator above it. It's a security guard — before the function even runs, it checks: is there a valid session? If not, it returns a 401 error immediately and the function never executes.</p>
+
+<!-- PART 4 -->
+<div class="part-header">
+  <div class="part-num">4</div>
+  <div>
+    <div class="part-title">NLP Preprocessing</div>
+    <div class="part-sub">How raw text gets turned into numbers the AI can read</div>
+  </div>
+</div>
+
+<p>Before any model touches your task, the raw text goes through 7 steps. Think of it as translating messy human language into something a machine understands.</p>
+
+<h3>Step 1 — Lowercasing</h3>
+<div class="code">"Finish BIO HW ASAP"  →  "finish bio hw asap"</div>
+
+<h3>Step 2 — Punctuation & emoji removal</h3>
+<div class="code">"study for exam!!! 😰"  →  "study for exam"</div>
+
+<h3>Step 3 — Abbreviation expansion</h3>
+<div class="code">hw → homework     bio → biology     ppt → presentation     idk → unknown</div>
+<p>We built a small dictionary of common student abbreviations. The model was trained on full words, so we expand before feeding in.</p>
+
+<h3>Step 4 — Tokenization</h3>
+<div class="code">"finish biology homework asap"  →  ["finish", "biology", "homework", "asap"]</div>
+<p>The sentence is split into individual words. Each word is called a token. Done by NLTK's word_tokenize.</p>
+
+<h3>Step 5 — Stopword removal</h3>
+<div class="code">["finish", "the", "biology", "homework", "by", "tonight"]
+→  ["finish", "biology", "homework", "tonight"]</div>
+<p>Stopwords are common words with no real meaning — "the", "is", "a", "by", "for". NLTK has a built-in list. We remove them because they add noise without helping the model.</p>
+
+<h3>Step 6 — Lemmatization</h3>
+<div class="code">studying → study     exams → exam     finished → finish</div>
+<p>Every word is reduced to its root form. "studying" and "study" mean the same thing — lemmatization makes the model treat them as one word. Done by NLTK's WordNetLemmatizer.</p>
+
+<h3>Step 7 — TF-IDF Vectorization</h3>
+<p>The final step. The model can't work with words — it only understands numbers. TF-IDF converts the cleaned word list into a long vector of numbers, one per word in the vocabulary. Each number represents how important that word is for this task compared to all training tasks.</p>
+<div class="code">["finish", "biology", "homework"]  →  [0, 0, 0.43, 0, 0.71, 0, 0.52, 0, ...]</div>
+<p>Most numbers are zero (words not present). The non-zero ones are the words that appeared. This is called a <strong>sparse vector</strong> — and this is what gets fed into the ML models.</p>
+
+<div class="callout">
+  <strong>One sentence summary:</strong> Raw messy text → cleaned → split into words → noise removed → roots extracted → converted to numbers → ready for AI.
+</div>
+
+<!-- PART 5 -->
+<div class="part-header">
+  <div class="part-num">5</div>
+  <div>
+    <div class="part-title">The ML Pipeline — Core of the Project</div>
+    <div class="part-sub">3 stages · 9 models · ensemble voting</div>
+  </div>
+</div>
+
+<p>After preprocessing, you have a vector of numbers. Now three prediction stages run one after another — each feeds into the next.</p>
+
+<div class="pipeline">
+  <div class="pipe">
+    <div class="pipe-lbl">Stage 1</div>
+    <div class="pipe-name">Category</div>
+    <div class="pipe-detail">Input: TF-IDF only<br><br>· Random Forest<br>· LinearSVC (SVM)<br>· Gradient Boosting<br><br><em>Majority vote</em></div>
+    <div class="pipe-out">→ Homework / Exam / Quiz / Project</div>
+  </div>
+  <div class="pipe">
+    <div class="pipe-lbl">Stage 2</div>
+    <div class="pipe-name">Importance</div>
+    <div class="pipe-detail">Input: TF-IDF + deadline<br><br>· Random Forest<br>· LinearSVC (SVM)<br>· Gradient Boosting<br><br><em>Majority vote</em></div>
+    <div class="pipe-out">→ High / Medium / Low</div>
+  </div>
+  <div class="pipe">
+    <div class="pipe-lbl">Stage 3</div>
+    <div class="pipe-name">Time Estimate</div>
+    <div class="pipe-detail">Input: TF-IDF + category<br><br>· Random Forest<br>· LinearSVR (SVM)<br>· Gradient Boosting<br><br><em>Average of three</em></div>
+    <div class="pipe-out">→ X.X hours (0.5–8)</div>
+  </div>
+</div>
+
+<h3>Why does each stage get different inputs?</h3>
+<ul>
+  <li><strong>Stage 1 (Category)</strong> — text alone is enough. "exam", "homework", "quiz" are obvious signals.</li>
+  <li><strong>Stage 2 (Importance)</strong> — needs the deadline too. The same homework with 1 day left is High; with 14 days it might be Medium. Text alone can't decide.</li>
+  <li><strong>Stage 3 (Time)</strong> — needs the category. An exam takes longer to prepare for than a quiz. Category gives context about workload.</li>
+</ul>
+
+<h3>Classification vs Regression</h3>
+<p><strong>Classification</strong> = pick from a fixed list (Category and Importance). Winner decided by majority vote across 3 models.</p>
+<p><strong>Regression</strong> = predict a continuous number (Time). The 3 models each give a number and we average them: RF: 2.0h + SVR: 1.8h + GB: 2.1h → average = <strong>2.0h</strong>.</p>
+
+<h3>The 3 Models — How Each One Thinks</h3>
+<table>
+  <thead><tr><th>Model</th><th>How it works</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Random Forest</strong></td><td>Builds hundreds of decision trees, each trained on a random slice of data. Takes the majority vote across all trees. Resistant to overfitting.</td></tr>
+    <tr><td><strong>SVM (Support Vector Machine)</strong></td><td>Finds the mathematical boundary that separates classes with the maximum gap between them. Historically the strongest model for text classification.</td></tr>
+    <tr><td><strong>Gradient Boosting</strong></td><td>Builds trees sequentially — each tree corrects the mistakes of the previous one. Repeats 150 times. Captures complex patterns the others might miss.</td></tr>
+  </tbody>
+</table>
+
+<h3>Why 3 models instead of 1? — The answer for your professor</h3>
+<div class="callout">
+  "A single model can be confidently wrong. By running three independent models that each learn differently, we reduce that risk. Random Forest averages hundreds of trees. SVM finds the widest mathematical boundary. Gradient Boosting fixes its own mistakes iteratively. They fail in different ways — so when they agree, we can trust the result. When they disagree, we warn the user with a badge."
+</div>
+
+<h3>Model Accuracy</h3>
+<table>
+  <thead><tr><th>Prediction</th><th>Random Forest</th><th>SVM</th><th>Gradient Boosting</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Category</strong></td><td class="good">99.5%</td><td class="good">99.5%</td><td class="good">99.0%</td></tr>
+    <tr><td><strong>Importance</strong></td><td class="good">100%</td><td class="good">99.5%</td><td class="good">100%</td></tr>
+    <tr><td><strong>Time (MAE)</strong></td><td class="ok">~57 min</td><td class="ok">~58 min</td><td class="ok">~57 min</td></tr>
+  </tbody>
+</table>
+<p>Time accuracy is lower because it's a regression problem on a continuous scale — and the same task genuinely takes different people different amounts of time. R² ≈ 0.50 means the models explain about half the real variation, which is reasonable given 1,000 training samples and inherent human variability.</p>
+
+<!-- PART 6 -->
+<div class="part-header">
+  <div class="part-num">6</div>
+  <div>
+    <div class="part-title">The API</div>
+    <div class="part-sub">How the frontend and backend talk to each other</div>
+  </div>
+</div>
+
+<p>API = Application Programming Interface. It's the agreed set of rules for how two pieces of software send messages to each other. The frontend (HTML page) and backend (Flask) are separate — they communicate only through HTTP requests.</p>
+
+<h3>Every request has three things</h3>
+<ul>
+  <li><strong>Method</strong> — GET (fetch something), POST (send something), DELETE (remove), PATCH (update)</li>
+  <li><strong>URL</strong> — which specific thing you're asking about</li>
+  <li><strong>Body</strong> — the data you're sending (for POST/PATCH requests)</li>
+</ul>
+
+<h3>All API Endpoints</h3>
+<table>
+  <thead><tr><th>Method</th><th>URL</th><th>What it does</th></tr></thead>
+  <tbody>
+    <tr><td>POST</td><td>/api/register</td><td>Create new account</td></tr>
+    <tr><td>POST</td><td>/api/login</td><td>Sign in</td></tr>
+    <tr><td>POST</td><td>/api/logout</td><td>Sign out</td></tr>
+    <tr><td>GET</td><td>/api/me</td><td>Check who is currently logged in</td></tr>
+    <tr><td>POST</td><td>/api/predict</td><td>Run the full ML pipeline on a task</td></tr>
+    <tr><td>GET</td><td>/api/tasks</td><td>Get all saved tasks for this user</td></tr>
+    <tr><td>POST</td><td>/api/tasks</td><td>Save a task to the database</td></tr>
+    <tr><td>DELETE</td><td>/api/tasks/&lt;id&gt;</td><td>Delete a specific task</td></tr>
+    <tr><td>PATCH</td><td>/api/tasks/&lt;id&gt;</td><td>Update a task (status, importance, etc.)</td></tr>
+  </tbody>
+</table>
+
+<h3>Real example — clicking Analyze</h3>
+<p>1. You type "finish bio hw ASAP", deadline = 1, click Analyze<br>
+2. Frontend sends: POST /api/predict with body <em>{ text: "finish bio hw ASAP", deadline: 1 }</em><br>
+3. Flask runs the full NLP + ML pipeline<br>
+4. Flask responds with:</p>
+<div class="code">{ "category": "Homework", "cat_agree": 3, "importance": "high",
+  "imp_agree": 3, "time_est": 1.5, "time_spread": 0.2 }</div>
+<p>5. Frontend reads that and updates the page — fills dropdowns, shows agreement badges, calculates priority score.</p>
+
+<div class="callout">
+  <strong>Restaurant analogy:</strong> The frontend is the customer. The backend is the kitchen. The API is the menu — a fixed list of things you can order. The customer never walks into the kitchen; they just place an order and wait for the result.
+</div>
+
+<!-- PART 7 -->
+<div class="part-header">
+  <div class="part-num">7</div>
+  <div>
+    <div class="part-title">Deployment</div>
+    <div class="part-sub">How the app runs live for everyone</div>
+  </div>
+</div>
+
+<h3>Why not just run locally?</h3>
+<p>When you run <em>python app.py</em> on your machine, the app works — but only for you, only on your computer, only while the terminal is open. The moment you close the laptop, it's gone. Deployment puts the app on a server that stays on 24/7.</p>
+
+<h3>What is Render?</h3>
+<p>Render is a cloud hosting platform — a company that rents you a computer in a data center that never turns off. You give them your code, they run it. We use the free tier — no payment, but with two limitations:</p>
+<ul>
+  <li>The server <strong>sleeps</strong> after 15 minutes of no traffic (first visit after sleep takes ~30 seconds to wake up)</li>
+  <li>The filesystem is <strong>ephemeral</strong> — the SQLite database resets on every redeploy (planned fix: migrate to PostgreSQL)</li>
+</ul>
+
+<h3>How code gets to Render</h3>
+<div class="code">Your machine  →  GitHub  →  Render (auto-redeploys on every push)</div>
+<p>This is called continuous deployment — you never manually upload anything to Render. Push code, Render picks it up automatically.</p>
+
+<h3>Three key files for deployment</h3>
+<ul>
+  <li><strong>Procfile</strong> — tells Render how to start the app: <em>web: gunicorn app:app</em></li>
+  <li><strong>requirements.txt</strong> — tells Render which Python libraries to install (Flask, scikit-learn, nltk, etc.)</li>
+  <li><strong>render.yaml</strong> — configuration file: Python version, environment variables, service type</li>
+</ul>
+
+<h3>Why gunicorn and not just Flask?</h3>
+<p>Flask's built-in server handles one request at a time. If two users click Analyze simultaneously, one waits. Gunicorn runs multiple workers in parallel — it's a production-grade web server and the standard way to deploy Flask apps.</p>
+
+<h3>Environment Variables</h3>
+<p>Two sensitive values are never stored in the code or on GitHub:</p>
+<ul>
+  <li><strong>SECRET_KEY</strong> — encrypts session cookies. If someone knows this, they can forge logins.</li>
+  <li><strong>DATABASE_URL</strong> — the database connection string</li>
+</ul>
+<p>These are set in Render's dashboard. The code reads them with <em>os.environ.get('SECRET_KEY')</em>.</p>
+
+<h3>Full request journey on the live site</h3>
+<div class="code">User's browser
+    ↓  HTTPS request
+  Render server
+    ↓
+  gunicorn  (receives and distributes the request)
+    ↓
+  Flask — app.py runs, processes the request
+    ↓
+  ML models + SQLite database
+    ↓
+  Response back to the browser</div>
+
+<!-- Summary -->
+<div class="summary">
+  <h2>Full Project Summary</h2>
+  <table>
+    <thead><tr><th>Part</th><th>Topic</th><th>Key point</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>What & Why</td><td>AI that classifies, prioritizes, and schedules academic tasks from plain text</td></tr>
+      <tr><td>2</td><td>Tech Stack</td><td>Flask (Python web server) + SQLite (database) + HTML/JS (frontend) + scikit-learn (AI)</td></tr>
+      <tr><td>3</td><td>Auth</td><td>Passwords hashed with Werkzeug, sessions via encrypted browser cookie, @require_auth guard</td></tr>
+      <tr><td>4</td><td>NLP</td><td>Clean → tokenize → remove stopwords → lemmatize → TF-IDF vector of numbers</td></tr>
+      <tr><td>5</td><td>ML Pipeline</td><td>3 stages (category → importance → time), each with 3 models, majority vote or average</td></tr>
+      <tr><td>6</td><td>API</td><td>Frontend sends HTTP requests to Flask endpoints, gets JSON back, updates the page</td></tr>
+      <tr><td>7</td><td>Deployment</td><td>Code pushed to GitHub → Render auto-redeploys → gunicorn serves requests live</td></tr>
+    </tbody>
+  </table>
+</div>
+
+</body>
+</html>

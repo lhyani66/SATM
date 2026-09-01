@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SATM — Project Brief</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 13.5px;
+    line-height: 1.65;
+    color: #1a1a2e;
+    background: #fff;
+    padding: 48px 56px;
+    max-width: 860px;
+    margin: 0 auto;
+  }
+
+  /* ── Cover strip ─────────────────────────────── */
+  .cover {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 60%, #0f3460 100%);
+    color: #fff;
+    border-radius: 14px;
+    padding: 36px 40px 30px;
+    margin-bottom: 36px;
+  }
+  .cover-tag {
+    font-size: 10px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: #7ecbff;
+    margin-bottom: 8px;
+  }
+  .cover h1 { font-size: 28px; font-weight: 700; margin-bottom: 6px; }
+  .cover h1 span { color: #7ecbff; }
+  .cover-sub { font-size: 13px; color: #b0c4de; margin-bottom: 20px; }
+  .cover-pills { display: flex; gap: 10px; flex-wrap: wrap; }
+  .pill {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 20px;
+    padding: 3px 12px;
+    font-size: 11px;
+    color: #d0e8ff;
+  }
+
+  /* ── Section titles ───────────────────────────── */
+  h2 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f3460;
+    border-left: 4px solid #0f3460;
+    padding-left: 10px;
+    margin: 30px 0 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+  h3 {
+    font-size: 13px;
+    font-weight: 700;
+    color: #16213e;
+    margin: 18px 0 6px;
+  }
+
+  /* ── Body text ────────────────────────────────── */
+  p { margin-bottom: 10px; }
+  ul { padding-left: 18px; margin-bottom: 10px; }
+  li { margin-bottom: 5px; }
+  strong { color: #0f3460; }
+
+  /* ── Workflow steps ───────────────────────────── */
+  .workflow { display: flex; flex-direction: column; gap: 0; margin: 16px 0; }
+  .step {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    position: relative;
+    padding-bottom: 16px;
+  }
+  .step:last-child { padding-bottom: 0; }
+  .step-line {
+    position: absolute;
+    left: 17px;
+    top: 34px;
+    bottom: 0;
+    width: 2px;
+    background: #dde6f5;
+  }
+  .step:last-child .step-line { display: none; }
+  .step-num {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    border-radius: 50%;
+    background: #0f3460;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+  }
+  .step-body { padding-top: 6px; }
+  .step-title { font-weight: 700; color: #0f3460; margin-bottom: 3px; }
+  .step-desc { color: #444; font-size: 13px; }
+
+  /* ── AI pipeline ──────────────────────────────── */
+  .pipeline { display: flex; align-items: stretch; gap: 0; margin: 16px 0; flex-wrap: wrap; }
+  .pipe-stage {
+    flex: 1;
+    min-width: 150px;
+    border: 1.5px solid #dde6f5;
+    border-radius: 10px;
+    padding: 14px 14px 12px;
+    background: #f8faff;
+    position: relative;
+  }
+  .pipe-stage + .pipe-stage { margin-left: 8px; }
+  .pipe-label {
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #7ecbff;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .pipe-title { font-size: 13px; font-weight: 700; color: #0f3460; margin-bottom: 6px; }
+  .pipe-models { font-size: 11.5px; color: #555; line-height: 1.6; }
+  .pipe-output {
+    margin-top: 8px;
+    background: #0f3460;
+    color: #fff;
+    border-radius: 6px;
+    padding: 4px 8px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  /* ── Accuracy table ───────────────────────────── */
+  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 12.5px; }
+  th {
+    background: #0f3460;
+    color: #fff;
+    padding: 8px 12px;
+    text-align: left;
+    font-weight: 600;
+  }
+  td { padding: 8px 12px; border-bottom: 1px solid #eef0f7; }
+  tr:last-child td { border-bottom: none; }
+  tr:nth-child(even) td { background: #f8faff; }
+  .acc-good { color: #1a8f4e; font-weight: 700; }
+  .acc-ok   { color: #b86b00; font-weight: 700; }
+
+  /* ── Tech stack cards ────────────────────────── */
+  .stack-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin: 14px 0; }
+  .stack-card {
+    border: 1.5px solid #dde6f5;
+    border-radius: 10px;
+    padding: 13px 14px;
+    background: #f8faff;
+  }
+  .stack-icon { font-size: 18px; margin-bottom: 5px; }
+  .stack-name { font-weight: 700; font-size: 12.5px; color: #0f3460; margin-bottom: 4px; }
+  .stack-detail { font-size: 11.5px; color: #555; line-height: 1.5; }
+
+  /* ── Callout box ──────────────────────────────── */
+  .callout {
+    background: #f0f6ff;
+    border-left: 4px solid #0f3460;
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    margin: 14px 0;
+    font-size: 13px;
+    color: #16213e;
+  }
+
+  /* ── Footer ───────────────────────────────────── */
+  .footer {
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1.5px solid #eef0f7;
+    font-size: 11.5px;
+    color: #888;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  /* ── Print ────────────────────────────────────── */
+  @media print {
+    body { padding: 28px 36px; font-size: 12.5px; }
+    .cover { border-radius: 8px; }
+    h2 { page-break-after: avoid; }
+    .step, .pipe-stage, .stack-card { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Cover -->
+<div class="cover">
+  <div class="cover-tag">Project Brief · May 2026</div>
+  <h1><span>SATM</span> — Smart Academic Task Manager</h1>
+  <div class="cover-sub">An AI-powered web application that helps students organize, prioritize, and schedule academic tasks using machine learning.</div>
+  <div class="cover-pills">
+    <span class="pill">Python · Flask</span>
+    <span class="pill">scikit-learn · NLTK</span>
+    <span class="pill">9 ML Models</span>
+    <span class="pill">Deployed on Render</span>
+  </div>
+</div>
+
+<!-- What is it -->
+<h2>What Is SATM?</h2>
+<p>Students often struggle to figure out which task to do first, how long it will take, and how important it is relative to everything else on their plate. SATM solves this by letting a student describe any academic task in plain language — the way they'd tell a friend — and the AI does the rest.</p>
+<p>The app classifies the task, estimates how long it will take, scores its urgency, and builds a prioritized daily schedule automatically. Everything runs in the browser; no installation needed.</p>
+
+<!-- User workflow -->
+<h2>How a User Uses It — Step by Step</h2>
+<div class="workflow">
+
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-line"></div>
+    <div class="step-body">
+      <div class="step-title">Register or log in</div>
+      <div class="step-desc">Create an account with an email and a strong password. The app validates the password live (length, uppercase, number, special character). Sessions persist across visits.</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-line"></div>
+    <div class="step-body">
+      <div class="step-title">Type your task in plain English</div>
+      <div class="step-desc">Write it exactly how you'd say it: <em>"finish bio hw ASAP"</em>, <em>"study for databases exam in 3 days"</em>, <em>"submit ML project by next week"</em>. No dropdowns, no forms.</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-line"></div>
+    <div class="step-body">
+      <div class="step-title">Deadline is auto-detected</div>
+      <div class="step-desc">The app reads your sentence and extracts the deadline automatically — "ASAP" → 1 day, "tomorrow" → 1 day, "in 3 days" → 3, "next week" → 7. You can always override it with the number field.</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-line"></div>
+    <div class="step-body">
+      <div class="step-title">Press Analyze — the AI pipeline runs</div>
+      <div class="step-desc">The text goes through NLP preprocessing (cleaning, tokenization, stopword removal, lemmatization) and then three separate ML prediction stages, each using an ensemble of 3 models. See the AI section below for exactly what happens here.</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">5</div>
+    <div class="step-line"></div>
+    <div class="step-body">
+      <div class="step-title">Results appear — with model agreement indicators</div>
+      <div class="step-desc">The app shows: <strong>Category</strong> (Homework / Exam / Quiz / Project), <strong>Importance</strong> (High / Medium / Low), <strong>Estimated time</strong> (hours). Next to each field is a badge showing how many of the 3 models agreed — "3/3 agree" in green, "2/3 agree" in orange. This tells the user how confident the prediction is.</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">6</div>
+    <div class="step-line"></div>
+    <div class="step-body">
+      <div class="step-title">Adjust if needed, then add to task list</div>
+      <div class="step-desc">All three detected fields are editable dropdowns — the user can correct the AI if it got something wrong. A priority score (0–100) and recommendation are shown before they click "Add to task list."</div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-num">7</div>
+    <div class="step-line"></div>
+    <div class="step-body">
+      <div class="step-title">View prioritized list and auto-generated schedule</div>
+      <div class="step-desc">All saved tasks are sorted by urgency × importance. The Schedule tab generates a full daily study plan with 45-minute sessions and automatic breaks, fitted to the tasks' estimated times.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- AI section — main focus -->
+<h2>The AI Pipeline — Most Important Section</h2>
+
+<p>Every task runs through three prediction stages in sequence. Each stage is an independent ensemble of three machine learning models. This is the core of the project.</p>
+
+<h3>Step 1 — Text Preprocessing (NLP)</h3>
+<p>Before any model sees the text, it goes through a pipeline built with <strong>NLTK</strong>:</p>
+<ul>
+  <li><strong>Cleaning</strong> — lowercasing, removing punctuation and emojis</li>
+  <li><strong>Abbreviation expansion</strong> — "hw" → "homework", "bio" → "biology", "ppt" → "presentation"</li>
+  <li><strong>Tokenization</strong> — splitting the sentence into individual words</li>
+  <li><strong>Stopword removal</strong> — dropping words like "the", "is", "a" that carry no meaning</li>
+  <li><strong>Lemmatization</strong> — reducing words to their root form ("studying" → "study", "exams" → "exam")</li>
+</ul>
+<p>The cleaned text is then converted into a numerical vector using <strong>TF-IDF</strong> (Term Frequency–Inverse Document Frequency), which scores how important each word is relative to the whole training dataset.</p>
+
+<h3>Step 2 — Three-Stage Ensemble Prediction</h3>
+
+<div class="pipeline">
+  <div class="pipe-stage">
+    <div class="pipe-label">Stage 1</div>
+    <div class="pipe-title">Category</div>
+    <div class="pipe-models">
+      Input: TF-IDF vector<br><br>
+      · Random Forest<br>
+      · LinearSVC (SVM)<br>
+      · Gradient Boosting<br><br>
+      <em>Majority vote</em>
+    </div>
+    <div class="pipe-output">→ Homework / Exam / Quiz / Project</div>
+  </div>
+  <div class="pipe-stage">
+    <div class="pipe-label">Stage 2</div>
+    <div class="pipe-title">Importance</div>
+    <div class="pipe-models">
+      Input: TF-IDF + deadline<br><br>
+      · Random Forest<br>
+      · LinearSVC (SVM)<br>
+      · Gradient Boosting<br><br>
+      <em>Majority vote</em>
+    </div>
+    <div class="pipe-output">→ High / Medium / Low</div>
+  </div>
+  <div class="pipe-stage">
+    <div class="pipe-label">Stage 3</div>
+    <div class="pipe-title">Time Estimate</div>
+    <div class="pipe-models">
+      Input: TF-IDF + category<br><br>
+      · Random Forest<br>
+      · LinearSVR (SVM)<br>
+      · Gradient Boosting<br><br>
+      <em>Average of three</em>
+    </div>
+    <div class="pipe-output">→ X.X hours (0.5–8)</div>
+  </div>
+</div>
+
+<div class="callout">
+  <strong>Why an ensemble?</strong> A single model can be confidently wrong. By running three independent models and combining their answers — majority vote for classification, average for regression — we reduce that risk. If all three agree, we show "3/3 agree" in green. If only two agree, we show "2/3 agree" in orange, signalling the user to double-check.
+</div>
+
+<h3>Why these three models?</h3>
+<ul>
+  <li><strong>Random Forest</strong> — an ensemble of decision trees itself; handles sparse TF-IDF vectors well, resistant to overfitting</li>
+  <li><strong>SVM (Support Vector Machine)</strong> — finds the widest margin between classes; historically the strongest performer on text classification tasks</li>
+  <li><strong>Gradient Boosting</strong> — builds trees sequentially, each correcting the previous one's errors; captures complex patterns the other two might miss</li>
+</ul>
+
+<h3>Training Data & Accuracy</h3>
+<p>All models were trained on a labelled dataset of <strong>1,000 academic tasks</strong>. The dataset was split 80% training / 20% test, stratified by category so every category is represented equally in both splits.</p>
+
+<table>
+  <thead>
+    <tr><th>Prediction</th><th>Random Forest</th><th>SVM</th><th>Gradient Boosting</th><th>Note</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Category</strong></td>
+      <td class="acc-good">99.5%</td>
+      <td class="acc-good">99.5%</td>
+      <td class="acc-good">99.0%</td>
+      <td>Classification — 4 classes</td>
+    </tr>
+    <tr>
+      <td><strong>Importance</strong></td>
+      <td class="acc-good">100%</td>
+      <td class="acc-good">99.5%</td>
+      <td class="acc-good">100%</td>
+      <td>Classification — 3 classes</td>
+    </tr>
+    <tr>
+      <td><strong>Time estimate</strong></td>
+      <td class="acc-ok">MAE ≈ 57 min</td>
+      <td class="acc-ok">MAE ≈ 58 min</td>
+      <td class="acc-ok">MAE ≈ 57 min</td>
+      <td>Regression — continuous output</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Time estimation accuracy is lower by design — this is a <em>regression</em> problem (predicting a continuous number), not classification. The same task genuinely takes different students different amounts of time, so there is real noise in the labels. The three models agree closely with each other (within ~1 minute on average), and their average prediction is better than any single model alone. R² ≈ 0.50, meaning the ensemble captures about half the real variation in task duration — which is reasonable given the data size and inherent unpredictability.</p>
+
+<!-- Tech stack -->
+<h2>Tech Stack — Quick Overview</h2>
+
+<div class="stack-grid">
+  <div class="stack-card">
+    <div class="stack-icon">🖥️</div>
+    <div class="stack-name">Frontend</div>
+    <div class="stack-detail">Single HTML file — vanilla JavaScript, no frameworks. Dark UI with live validation and dynamic task list. Communicates with the backend via fetch (REST API).</div>
+  </div>
+  <div class="stack-card">
+    <div class="stack-icon">⚙️</div>
+    <div class="stack-name">Backend</div>
+    <div class="stack-detail">Python + Flask. Handles authentication, runs the ML pipeline, and serves the API. Runs on gunicorn in production. Deployed on Render.</div>
+  </div>
+  <div class="stack-card">
+    <div class="stack-icon">🗄️</div>
+    <div class="stack-name">Database</div>
+    <div class="stack-detail">SQLite via Flask-SQLAlchemy. Two tables: Users (id, email, hashed password) and Tasks (linked to user, stores all predictions and status).</div>
+  </div>
+  <div class="stack-card">
+    <div class="stack-icon">🔐</div>
+    <div class="stack-name">Authentication</div>
+    <div class="stack-detail">Session-based auth. Passwords hashed with Werkzeug (bcrypt). Registration enforces email format + strong password rules. Sessions persist across browser visits.</div>
+  </div>
+  <div class="stack-card">
+    <div class="stack-icon">🤖</div>
+    <div class="stack-name">ML / NLP</div>
+    <div class="stack-detail">scikit-learn for all models and TF-IDF. NLTK for tokenization, lemmatization, and stopwords. scipy.sparse for memory-efficient feature matrices.</div>
+  </div>
+  <div class="stack-card">
+    <div class="stack-icon">🚀</div>
+    <div class="stack-name">Deployment</div>
+    <div class="stack-detail">Deployed on Render. Secret key and DB URI managed via environment variables.</div>
+  </div>
+</div>
+
+
+</body>
+</html>
