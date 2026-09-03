@@ -26,7 +26,6 @@ from nltk.tokenize import word_tokenize
 
 # ── App setup ─────────────────────────────────────────────────────────────────
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'satm-dev-secret-change-before-deploy')
 # Render hands out postgres:// URLs, but SQLAlchemy 2.x only accepts postgresql://
 _db_url = os.environ.get('DATABASE_URL', 'sqlite:///satm.db')
 if _db_url.startswith('postgres://'):
@@ -36,6 +35,15 @@ app.config['SQLALCHEMY_DATABASE_URI'] = _db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # Managed Postgres drops idle connections; recycle before it bites.
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_pre_ping': True, 'pool_recycle': 300}
+
+# Sessions are signed with this key. A known key means forgeable logins, so
+# production must supply a real one; local SQLite dev keeps working unchanged.
+_secret = os.environ.get('SECRET_KEY')
+if not _secret:
+    if _db_url.startswith('postgresql://'):
+        raise RuntimeError('SECRET_KEY must be set when running against PostgreSQL')
+    _secret = 'satm-dev-secret-change-before-deploy'
+app.secret_key = _secret
 
 db = SQLAlchemy(app)
 
@@ -270,21 +278,6 @@ def update_task(task_id):
     db.session.commit()
     return jsonify({'message': 'Updated'}), 200
 
-# ── Temporary admin dump (remove after use) ───────────────────────────────────
-@app.route('/admin/dump')
-def admin_dump():
-    if request.args.get('key') != 'satm-admin-2026':
-        return jsonify({'error': 'forbidden'}), 403
-    users = User.query.all()
-    result = []
-    for u in users:
-        tasks = [{'id': t.id, 'task_text': t.task_text, 'category': t.category,
-                  'importance': t.importance, 'deadline': t.deadline,
-                  'time_est': t.time_est, 'status': t.status,
-                  'created_at': str(t.created_at)} for t in u.tasks]
-        result.append({'id': u.id, 'email': u.email, 'tasks': tasks})
-    return jsonify(result), 200
-
 # ── Serve the frontend ────────────────────────────────────────────────────────
 @app.route('/')
 def index():
@@ -292,4 +285,4 @@ def index():
 
 # ── Run ───────────────────────────────────────────────────────────────────────
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=os.environ.get('FLASK_DEBUG') == '1')
