@@ -1071,9 +1071,32 @@
 
     // ── Easter egg 1 · Rain ────────────────────────────────────────────────────
     // The storm reaches the alley, and the whole room turns cold with it.
+    // The sign says "open late", so after dark the weather turns up on its own.
+    // 21:00–05:00 local: light rain on the window, warm interior untouched.
+    function isLate() { var h = new Date().getHours(); return h >= 21 || h < 5; }
+
     function ambientLevel() {
-      return document.getElementById('auth-overlay').style.display === 'none' ? 0 : 1;
+      if (document.body.classList.contains('cleared')) return 0;   // dawn, not rain
+      var signedOut = document.getElementById('auth-overlay').style.display !== 'none';
+      return (signedOut || isLate()) ? 1 : 0;
     }
+
+    // Single place that decides what the sky is doing. A manual storm and the
+    // all-clear dawn both outrank it.
+    var _rainAnnounced = false;
+    function syncWeather() {
+      if (document.body.classList.contains('rain-mode')) return;
+      if (document.body.classList.contains('cleared')) return;
+      var lvl = ambientLevel();
+      Rain.set(lvl);
+      if (lvl && isLate() && !_rainAnnounced) {
+        _rainAnnounced = true;
+        setTimeout(function () { toast('raining outside — the shop is open late'); }, 1400);
+      }
+    }
+
+    // Cross into the small hours mid-session and it starts without a reload.
+    setInterval(syncWeather, 60000);
     // Whole-word test written without regex escapes: inside a JS string  is a
     // backspace, not a word boundary, so a RegExp built that way silently never matches.
     function saidWord(text, word) {
@@ -1125,7 +1148,7 @@
         toast('everything is done — go outside');
       } else {
         Rain.motes(false);
-        Rain.set(ambientLevel());
+        syncWeather();
       }
       updateFlag();
     }
@@ -1222,20 +1245,20 @@
       }
       // The auth overlay is visible by default, so showAuth() never runs on a
       // cold load — start the weather outside the window here instead.
-      Rain.set(ambientLevel());
+      syncWeather();
     }
 
     function showApp() {
       document.getElementById('auth-overlay').style.display = 'none';
       document.getElementById('main-app').style.display = 'block';
-      if (!document.body.classList.contains('rain-mode')) Rain.set(0);
+      syncWeather();
       document.getElementById('user-email').textContent = currentUser;
     }
 
     function showAuth() {
       document.getElementById('auth-overlay').style.display = 'grid';
       document.getElementById('main-app').style.display = 'none';
-      if (!document.body.classList.contains('rain-mode')) Rain.set(1);
+      syncWeather();
     }
 
     // ── Auth ───────────────────────────────────────────────────────────────────
