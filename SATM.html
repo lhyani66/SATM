@@ -1218,8 +1218,11 @@
         currentUser = (await res.json()).email;
         showApp();
         loadTasks();
+        return;
       }
-      // auth overlay is already visible by default
+      // The auth overlay is visible by default, so showAuth() never runs on a
+      // cold load — start the weather outside the window here instead.
+      Rain.set(ambientLevel());
     }
 
     function showApp() {
