@@ -27,8 +27,15 @@ from nltk.tokenize import word_tokenize
 # ── App setup ─────────────────────────────────────────────────────────────────
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'satm-dev-secret-change-before-deploy')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///satm.db')
+# Render hands out postgres:// URLs, but SQLAlchemy 2.x only accepts postgresql://
+_db_url = os.environ.get('DATABASE_URL', 'sqlite:///satm.db')
+if _db_url.startswith('postgres://'):
+    _db_url = _db_url.replace('postgres://', 'postgresql://', 1)
+
+app.config['SQLALCHEMY_DATABASE_URI'] = _db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# Managed Postgres drops idle connections; recycle before it bites.
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {'pool_pre_ping': True, 'pool_recycle': 300}
 
 db = SQLAlchemy(app)
 

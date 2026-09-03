@@ -48,7 +48,7 @@ All models were trained on a labelled dataset of 1,000 academic tasks. Preproces
 |---|---|
 | Frontend | Vanilla HTML / CSS / JavaScript |
 | Backend | Python · Flask · Flask-SQLAlchemy |
-| Database | SQLite (local) |
+| Database | SQLite (local dev) · PostgreSQL (production) |
 | ML | scikit-learn · TF-IDF · Random Forest |
 | NLP | NLTK — tokenization, lemmatization, stopwords |
 | Auth | Werkzeug password hashing · Flask sessions |
@@ -75,7 +75,7 @@ SATM/
 │   ├── deadline_scaler.pkl
 │   └── category_encoder.pkl
 └── instance/
-    └── satm.db              # SQLite database (auto-created on first run)
+    └── satm.db              # Local SQLite database (auto-created on first run)
 ```
 
 ---
@@ -114,7 +114,7 @@ Copy `.env.example` to `.env` for local overrides:
 | Variable | Default | Description |
 |---|---|---|
 | `SECRET_KEY` | dev fallback | Flask session signing key — **must be set in production** |
-| `DATABASE_URL` | `sqlite:///satm.db` | Database connection string |
+| `DATABASE_URL` | `sqlite:///satm.db` | Database connection string. Local dev defaults to SQLite; Render injects a PostgreSQL URL automatically. |
 
 ---
 
