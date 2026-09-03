@@ -14,277 +14,798 @@
   <meta name="twitter:title"       content="SATM — Smart Academic Task Manager" />
   <meta name="twitter:description" content="AI-powered task analysis and scheduling for students." />
 
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Onest:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <meta name="theme-color" content="#0A0C09" />
   <style>
+    /* ═══════════════════════════════════════════════════════════════════════
+       SATM — "Late Hours"
+       A small shop at the end of an alley, rain on the window, lamp still on.
+       Warm dark, one green sign, nothing hurried.
+       ═══════════════════════════════════════════════════════════════════════ */
+
+    :root {
+      /* Ground — warm near-black, faint green undertone. Never blue. */
+      --bg:        #0A0C09;
+      --bg-deep:   #050603;
+      --surface:   rgba(255, 252, 240, 0.034);
+      --surface-2: rgba(255, 252, 240, 0.058);
+      --line:      rgba(235, 255, 225, 0.085);
+      --line-2:    rgba(235, 255, 225, 0.17);
+
+      /* Ink — warm off-white, never clinical */
+      --txt:   #E9EFE4;
+      --txt-2: #A2AE9A;
+      --txt-3: #717D6B;
+      --txt-4: #464F43;
+
+      /* The sign in the window */
+      --accent:      #52DE63;
+      --accent-deep: #17A63F;
+      --accent-soft: #97EDA1;
+      --glow:        rgba(82, 222, 99, 0.55);
+
+      /* Lamplight — warm, ambient only, never a UI colour */
+      --lamp: rgba(255, 198, 122, 0.075);
+
+      /* Status — unchanged, exactly as you asked */
+      --hi:  #FB7185;
+      --med: #FBBF24;
+      --low: #34D399;
+
+      --r-sm: 9px;  --r-md: 13px;  --r-lg: 17px;  --r-xl: 22px;
+
+      /* Slower than usual. The shop is not in a hurry. */
+      --quiet: cubic-bezier(.16, 1, .3, 1);
+      --ease:  cubic-bezier(.4, 0, .2, 1);
+
+      --shadow: 0 2px 4px rgba(0,0,0,.5), 0 14px 40px -18px rgba(0,0,0,.85);
+      --shadow-lift: 0 4px 8px rgba(0,0,0,.5), 0 24px 60px -22px rgba(0,0,0,.95);
+    }
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-text-size-adjust: 100%; }
 
     body {
-      font-family: 'Inter', sans-serif;
-      background: #0a0a0a;
-      color: #d4d4d4;
+      font-family: 'Onest', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--txt);
       min-height: 100vh;
-      padding: 2rem 1rem;
+      padding: 2.75rem 1.25rem 5rem;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+      position: relative;
+      overflow-x: hidden;
+      transition: background 1.4s var(--quiet), color 1.4s var(--quiet);
     }
 
-    .app { max-width: 960px; margin: 0 auto; }
-
-    /* Header */
-    .header {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      margin-bottom: 2rem;
-      padding-bottom: 1.25rem;
-      border-bottom: 0.5px solid #1e1e1e;
+    /* ── Lamplight + vignette ───────────────────────────────────────────────
+       One warm source top-left, a green cast from the sign, and darkness
+       closing in at the edges — the alley the shop sits in.               */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; pointer-events: none; z-index: -3;
+      background:
+        radial-gradient(78% 58% at 8% -6%,  var(--lamp), transparent 62%),
+        radial-gradient(56% 44% at 86% 4%,  rgba(82, 222, 99, .052), transparent 64%),
+        radial-gradient(120% 96% at 50% 42%, transparent 34%, rgba(5,6,3,.62) 88%);
     }
+
+    /* ── Rain — canvas. Every drop has its own length, speed and opacity,
+       and is re-seeded when it leaves the frame, so there is no loop to see. */
+    #rain-canvas {
+      position: fixed; inset: 0; pointer-events: none; z-index: -2;
+      opacity: 0; transition: opacity 1.4s var(--quiet);
+    }
+    #rain-canvas.on { opacity: 1; }
+
+    /* ── Paper grain — cloth and card, not digital noise ─────────────────── */
+    .grain {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      opacity: .04; mix-blend-mode: soft-light;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.7' numOctaves='4'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       MOOD 1 · Rain — the storm reaches the alley.
+       The lamp goes cold and blue, the sign washes out to wet glass.
+       ═══════════════════════════════════════════════════════════════════════ */
+    body.rain-mode {
+      --bg:        #070A0D;
+      --surface:   rgba(224, 242, 255, 0.036);
+      --surface-2: rgba(224, 242, 255, 0.062);
+      --line:      rgba(206, 234, 255, 0.09);
+      --line-2:    rgba(206, 234, 255, 0.19);
+
+      --txt:   #E1ECF3;
+      --txt-2: #94A8B7;
+      --txt-3: #66788A;
+      --txt-4: #3F4E5C;
+
+      --accent:      #6FC3D1;
+      --accent-deep: #26808F;
+      --accent-soft: #A6E1E9;
+      --glow:        rgba(111, 195, 209, 0.5);
+
+      --lamp: rgba(146, 192, 226, 0.055);
+    }
+    /* Wet glass: everything picks up a faint cold sheen */
+    body.rain-mode .panel {
+      background: linear-gradient(180deg, rgba(224,242,255,.052), rgba(224,242,255,.016));
+    }
+    body.rain-mode .header p::before { animation-duration: 2.6s; }
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       MOOD 2 · Panic — more than three things are on fire.
+       Warm ground goes hot, the sign turns ember, the button won't sit still.
+       ═══════════════════════════════════════════════════════════════════════ */
+    body.panic {
+      --bg:        #0E0704;
+      --surface:   rgba(255, 234, 222, 0.042);
+      --surface-2: rgba(255, 234, 222, 0.07);
+      --line:      rgba(255, 198, 172, 0.12);
+      --line-2:    rgba(255, 198, 172, 0.24);
+
+      --txt:   #F7EAE4;
+      --txt-2: #C0A79E;
+      --txt-3: #8B746B;
+      --txt-4: #5B4941;
+
+      --accent:      #FF7A45;
+      --accent-deep: #D6331A;
+      --accent-soft: #FFB48F;
+      --glow:        rgba(255, 122, 69, 0.62);
+
+      --lamp: rgba(255, 118, 56, 0.10);
+    }
+    body.panic .panel {
+      background: linear-gradient(180deg, rgba(255,234,222,.055), rgba(255,234,222,.018));
+    }
+    /* The sign stops breathing calmly and starts flashing */
+    body.panic .header p::before { animation-duration: 1s; }
+    /* The primary action starts pushing back */
+    body.panic .btn:not(.secondary) { animation: urgent 1.5s var(--ease) infinite; }
+    @keyframes urgent {
+      0%, 100% { box-shadow: 0 0 0 1px rgba(255,255,255,.2) inset, 0 8px 22px -10px var(--glow); }
+      50%      { box-shadow: 0 0 0 1px rgba(255,255,255,.34) inset, 0 12px 40px -8px var(--glow); }
+    }
+    body.panic .task-item:has(.badge-high) { border-color: rgba(251,113,133,.34); }
+    /* The header line tells you why */
+    /* ═══════════════════════════════════════════════════════════════════════
+       MOOD 3 · All clear — the queue is empty. Night lifts into first light:
+       the lamp warms and widens, the sign turns gold, dust rises through it.
+       ═══════════════════════════════════════════════════════════════════════ */
+    body.cleared {
+      --bg:        #0B0906;
+      --surface:   rgba(255, 246, 228, 0.05);
+      --surface-2: rgba(255, 246, 228, 0.08);
+      --line:      rgba(255, 232, 194, 0.11);
+      --line-2:    rgba(255, 232, 194, 0.22);
+
+      --txt:   #F6EFE3;
+      --txt-2: #B7AA95;
+      --txt-3: #877C6B;
+      --txt-4: #58513F;
+
+      --accent:      #FFC96B;
+      --accent-deep: #D2911F;
+      --accent-soft: #FFE2AC;
+      --glow:        rgba(255, 201, 107, 0.55);
+
+      /* Dawn: the light source grows rather than just changing colour */
+      --lamp: rgba(255, 198, 110, 0.17);
+    }
+    body.cleared .panel {
+      background: linear-gradient(180deg, rgba(255,246,228,.06), rgba(255,246,228,.02));
+    }
+    body.cleared .header p::before { animation-duration: 6s; }
+    /* Everything's done — the summary stops reading as a workload */
+    body.cleared .summary-val { color: var(--accent-soft); }
+    body.cleared .empty-state { color: var(--txt-3); }
+    /* The finished pile has earned its place; stop hiding it */
+    body.cleared .task-item.done { opacity: .62; }
+    body.cleared .done-sep { color: var(--accent); }
+
+    .mode-flag {
+      font-family: 'IBM Plex Mono', monospace; font-size: 8.5px; font-weight: 600;
+      letter-spacing: .17em; text-transform: uppercase;
+      color: var(--accent); background: rgba(255,122,69,.12);
+      border: 1px solid rgba(255,122,69,.3); border-radius: 20px;
+      padding: 3px 9px; margin-left: 4px; display: none;
+    }
+    body.panic .mode-flag,
+    body.cleared .mode-flag { display: inline-block; animation: settle .5s var(--quiet); }
+
+    .app { max-width: 1020px; margin: 0 auto; position: relative; z-index: 1; }
+
+    /* ── Entrance: things settle rather than arrive ─────────────────────── */
+    @keyframes settle {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    /* ── The sign ───────────────────────────────────────────────────────── */
     .logo {
-      width: 38px; height: 38px;
-      background: #185FA5;
-      border-radius: 10px;
+      width: 34px; height: 34px; flex-shrink: 0; cursor: pointer;
+      color: var(--accent);
       display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
+      filter: drop-shadow(0 0 9px rgba(82,222,99,.42));
+      transition: filter .8s var(--quiet), transform .8s var(--quiet);
     }
-    .logo svg { width: 20px; height: 20px; }
-    .header h1 { font-size: 18px; font-weight: 600; color: #fff; letter-spacing: -0.3px; }
-    .header p  { font-size: 12px; color: #3f3f3f; margin-top: 3px; }
-    .header-user { margin-left: auto; display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-    .user-email  { font-size: 11px; color: #3f3f3f; }
+    .logo:hover { filter: drop-shadow(0 0 16px rgba(82,222,99,.75)); transform: translateY(-1px); }
+    .logo:active { transform: scale(.95); }
+    .logo svg { width: 100%; height: 100%; }
+
+    /* ── Header ─────────────────────────────────────────────────────────── */
+    .header {
+      display: flex; align-items: center; gap: 14px;
+      margin-bottom: 2.4rem; padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--line);
+      animation: settle .9s var(--quiet) backwards;
+    }
+    .header h1 {
+      font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+      font-size: 23px; font-weight: 800; color: var(--txt);
+      letter-spacing: -.04em; line-height: 1.1;
+    }
+    .header h1 em { font-style: normal; font-weight: 400; color: var(--txt-3); }
+    .header p {
+      font-size: 9.5px; color: var(--txt-3); margin-top: 5px;
+      letter-spacing: .19em; text-transform: uppercase; font-weight: 500;
+      font-family: 'IBM Plex Mono', ui-monospace, monospace;
+      display: flex; align-items: center; gap: 7px;
+    }
+    /* The little neon dot that says the place is open */
+    .header p::before {
+      content: ''; width: 5px; height: 5px; border-radius: 50%;
+      background: var(--accent); box-shadow: 0 0 7px var(--glow);
+      animation: breathe 4.5s var(--ease) infinite;
+    }
+    @keyframes breathe { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+
+    .header-user { margin-left: auto; display: flex; align-items: center; gap: 13px; flex-shrink: 0; }
+    .user-email { font-size: 11px; color: var(--txt-3); font-family: 'IBM Plex Mono', monospace; }
     .btn-logout {
-      font-size: 11px; color: #3f3f3f;
-      background: none; border: 0.5px solid #252525;
-      padding: 5px 10px; border-radius: 6px;
-      cursor: pointer; font-family: 'Inter', sans-serif;
-      transition: color .15s, border-color .15s;
+      font-size: 11.5px; color: var(--txt-2); font-family: inherit; font-weight: 500;
+      background: var(--surface); border: 1px solid var(--line);
+      padding: 8px 14px; border-radius: var(--r-sm); cursor: pointer;
+      transition: color .5s var(--quiet), border-color .5s var(--quiet), background .5s var(--quiet);
     }
-    .btn-logout:hover { color: #d4d4d4; border-color: #3f3f3f; }
+    .btn-logout:hover { color: var(--txt); border-color: var(--line-2); background: var(--surface-2); }
 
-    /* Layout */
-    .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-    @media (max-width: 640px) { .layout { grid-template-columns: 1fr; } }
+    /* ── Layout ─────────────────────────────────────────────────────────── */
+    .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 1.15rem; align-items: start; }
+    @media (max-width: 800px) { .layout { grid-template-columns: 1fr; } }
 
-    /* Panel */
-    .panel { background: #141414; border: 0.5px solid #1e1e1e; border-radius: 12px; padding: 1.25rem; }
+    /* ── Panels — lit from above, like a shelf under a lamp ─────────────── */
+    .panel {
+      background: linear-gradient(180deg, rgba(255,252,240,.05), rgba(255,252,240,.018));
+      border: 1px solid var(--line);
+      border-radius: var(--r-xl);
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+      position: relative; overflow: hidden;
+      transition: background 1.4s var(--quiet), border-color 1.4s var(--quiet);
+      animation: settle .9s var(--quiet) backwards;
+    }
+    .panel::before {
+      content: ''; position: absolute; inset: 0 0 auto 0; height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255,248,230,.26) 24%, rgba(255,248,230,.26) 76%, transparent);
+    }
+    .layout > div:nth-child(1) .panel { animation-delay: .08s; }
+    .layout > div:nth-child(2) .panel:nth-of-type(1) { animation-delay: .16s; }
+    .layout > div:nth-child(2) .panel:nth-of-type(2) { animation-delay: .24s; }
+
     .panel-title {
-      font-size: 10px; font-weight: 600; letter-spacing: 0.12em;
-      text-transform: uppercase; color: #3f3f3f;
-      margin-bottom: 1rem; display: flex; align-items: center; gap: 8px;
+      font-family: 'IBM Plex Mono', ui-monospace, monospace;
+      font-size: 9.5px; font-weight: 600; letter-spacing: .19em;
+      text-transform: uppercase; color: var(--txt-3);
+      margin-bottom: 1.1rem; display: flex; align-items: center; gap: 11px;
     }
-    .panel-title::after { content: ''; flex: 1; height: 0.5px; background: #1e1e1e; }
+    .panel-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, var(--line), transparent); }
 
-    /* Form */
-    label { font-size: 12px; color: #3f3f3f; display: block; margin-bottom: 6px; font-weight: 500; }
+    /* ── Fields ─────────────────────────────────────────────────────────── */
+    label { font-size: 12.5px; color: var(--txt-2); display: block; margin-bottom: 8px; font-weight: 500; }
+
+    textarea, .field-input, .deadline-row input[type="number"], .detected select {
+      font-family: 'Onest', system-ui, sans-serif;
+      background: rgba(0,0,0,.3);
+      border: 1px solid var(--line);
+      color: var(--txt); outline: none;
+      transition: border-color .5s var(--quiet), box-shadow .6s var(--quiet), background .5s var(--quiet);
+    }
+    textarea:focus, .field-input:focus,
+    .deadline-row input[type="number"]:focus, .detected select:focus {
+      border-color: rgba(82,222,99,.5);
+      box-shadow: 0 0 0 3.5px rgba(82,222,99,.11);
+      background: rgba(0,0,0,.4);
+    }
+    textarea::placeholder, .field-input::placeholder { color: var(--txt-4); }
+
     textarea {
-      width: 100%; background: #0f0f0f; border: 0.5px solid #252525;
-      color: #d4d4d4; font-family: 'Inter', sans-serif; font-size: 13px;
-      padding: 10px 12px; border-radius: 8px; resize: none; min-height: 92px;
-      line-height: 1.6; outline: none; transition: border-color .2s;
+      width: 100%; font-size: 13.5px; padding: 13px 15px;
+      border-radius: var(--r-md); resize: none; min-height: 104px; line-height: 1.7;
     }
-    textarea:focus { border-color: #185FA5; }
-    textarea::placeholder { color: #2a2a2a; }
 
-    .hint { font-size: 11px; color: #2d2d2d; margin-top: 7px; line-height: 1.65; }
-    .hint b { color: #185FA5; font-weight: 500; }
+    .hint { font-size: 11.5px; color: var(--txt-3); margin-top: 10px; line-height: 1.85; }
+    .hint b {
+      color: var(--accent-soft); font-weight: 500;
+      font-family: 'IBM Plex Mono', monospace; font-size: 10.5px;
+      background: rgba(82,222,99,.09); border: 1px solid rgba(82,222,99,.19);
+      padding: 2px 6px; border-radius: 5px;
+    }
 
-    /* Deadline row */
-    .deadline-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+    /* ── Deadline ───────────────────────────────────────────────────────── */
+    .deadline-row { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
     .deadline-row label { margin-bottom: 0; flex-shrink: 0; }
     .deadline-row input[type="number"] {
-      width: 72px; background: #0f0f0f; border: 0.5px solid #252525;
-      color: #d4d4d4; font-family: 'Inter', sans-serif; font-size: 13px;
-      padding: 7px 10px; border-radius: 8px; outline: none; transition: border-color .2s;
-      -moz-appearance: textfield; text-align: center;
+      width: 78px; font-size: 13.5px; padding: 9px 10px; border-radius: var(--r-sm);
+      -moz-appearance: textfield; text-align: center; font-weight: 600;
+      font-family: 'IBM Plex Mono', monospace;
     }
-    .deadline-row input[type="number"]:focus { border-color: #185FA5; }
     .deadline-row input[type="number"]::-webkit-outer-spin-button,
     .deadline-row input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
-    .dl-unit { font-size: 12px; color: #3f3f3f; flex-shrink: 0; }
-    .dl-auto  { font-size: 10px; color: #185FA5; flex-shrink: 0; display: none; }
+    .dl-unit { font-size: 12.5px; color: var(--txt-3); flex-shrink: 0; }
+    .dl-auto {
+      font-size: 9px; color: var(--accent); flex-shrink: 0; display: none;
+      font-family: 'IBM Plex Mono', monospace; font-weight: 600;
+      letter-spacing: .13em; text-transform: uppercase;
+      background: rgba(82,222,99,.10); border: 1px solid rgba(82,222,99,.26);
+      padding: 4px 9px; border-radius: 20px;
+      animation: settle .6s var(--quiet);
+    }
 
-    /* Buttons */
+    /* ── Buttons ────────────────────────────────────────────────────────── */
     .btn {
-      width: 100%; margin-top: 10px; padding: 10px;
-      background: #185FA5; color: #fff;
-      font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
-      border: none; border-radius: 8px; cursor: pointer;
-      transition: background .15s, transform .1s; letter-spacing: 0.01em;
+      width: 100%; margin-top: 14px; padding: 12px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+      color: #03170A; font-family: 'Onest', sans-serif; font-size: 13.5px; font-weight: 600;
+      border: none; border-radius: var(--r-md); cursor: pointer;
+      letter-spacing: -.005em; position: relative; overflow: hidden;
+      box-shadow: 0 0 0 1px rgba(255,255,255,.2) inset, 0 8px 22px -10px var(--glow);
+      transition: transform .55s var(--quiet), box-shadow .55s var(--quiet), filter .3s;
     }
-    .btn:hover   { background: #0C447C; }
-    .btn:active  { transform: scale(0.98); }
-    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+    .btn::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(105deg, transparent 34%, rgba(255,255,255,.3) 50%, transparent 66%);
+      transform: translateX(-125%); transition: transform 1.1s var(--quiet);
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 0 0 1px rgba(255,255,255,.28) inset, 0 16px 36px -12px var(--glow); }
+    .btn:hover::after { transform: translateX(125%); }
+    .btn:active { transform: translateY(0) scale(.99); }
+    .btn:disabled { opacity: .45; cursor: not-allowed; transform: none; filter: saturate(.35); }
+    .btn:disabled::after { display: none; }
+
     .btn.secondary {
-      background: transparent; color: #185FA5;
-      border: 0.5px solid #185FA5; margin-top: 8px;
+      background: var(--surface); color: var(--accent);
+      border: 1px solid rgba(82,222,99,.3); margin-top: 10px; box-shadow: none;
     }
-    .btn.secondary:hover { background: #0f1f30; }
+    .btn.secondary:hover {
+      background: rgba(82,222,99,.09); border-color: rgba(82,222,99,.5);
+      box-shadow: 0 8px 22px -12px var(--glow);
+    }
 
-    /* Divider */
-    .divider { height: 0.5px; background: #1e1e1e; margin: 1rem 0; }
+    .divider { height: 1px; background: linear-gradient(90deg, transparent, var(--line), transparent); margin: 1.3rem 0; }
 
-    /* Result box */
+    /* ── Result ─────────────────────────────────────────────────────────── */
     .result-box { display: none; }
-    .result-box.on { display: block; }
+    .result-box.on { display: block; animation: settle .75s var(--quiet); }
 
-    /* Detected fields */
-    .detected-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 10px; }
-    .detected { background: #0f0f0f; border: 0.5px solid #1e1e1e; border-radius: 8px; padding: 9px 10px; }
-    .detected-top { display: flex; align-items: center; gap: 5px; margin-bottom: 6px; }
-    .detected-k { font-size: 10px; color: #3a3a3a; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; }
-    .ai-badge { font-size: 9px; background: #0f2040; color: #185FA5; border-radius: 3px; padding: 1px 5px; font-weight: 600; letter-spacing: 0.04em; }
+    .detected-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; margin-bottom: 13px; }
+    .detected {
+      background: var(--surface); border: 1px solid var(--line);
+      border-radius: var(--r-md); padding: 12px;
+      transition: border-color .5s var(--quiet), background .5s var(--quiet);
+    }
+    .detected:hover { border-color: var(--line-2); background: var(--surface-2); }
+    .detected-top { display: flex; align-items: center; gap: 6px; margin-bottom: 9px; flex-wrap: wrap; }
+    .detected-k {
+      font-size: 9px; color: var(--txt-3); font-weight: 600; letter-spacing: .15em;
+      text-transform: uppercase; font-family: 'IBM Plex Mono', monospace;
+    }
+    .ai-badge {
+      font-size: 8px; font-weight: 600; letter-spacing: .12em;
+      background: rgba(82,222,99,.13); border: 1px solid rgba(82,222,99,.26);
+      color: var(--accent-soft); border-radius: 4px; padding: 2px 6px;
+      font-family: 'IBM Plex Mono', monospace;
+    }
     .detected select {
-      width: 100%; background: #0f0f0f; border: 0.5px solid #252525;
-      color: #fff; font-family: 'Inter', sans-serif; font-size: 12px;
-      font-weight: 500; padding: 4px 6px; border-radius: 6px; outline: none; transition: border-color .2s;
+      width: 100%; font-size: 12.5px; font-weight: 600; color: var(--txt);
+      padding: 7px 8px; border-radius: var(--r-sm); cursor: pointer;
     }
-    .detected select:focus { border-color: #185FA5; }
+    .detected select option { background: #12160F; color: var(--txt); }
 
-    /* Time estimate */
-    .time-row { text-align: center; font-size: 12px; color: #3a3a3a; margin-bottom: 10px; }
-    .time-row span { color: #d4d4d4; font-weight: 500; }
+    .time-row { text-align: center; font-size: 12.5px; color: var(--txt-3); margin-bottom: 14px; }
+    .time-row span { color: var(--txt); font-weight: 600; }
+    .time-row #r-time { font-family: 'IBM Plex Mono', monospace; color: var(--accent-soft); }
 
-    /* Priority bar */
-    .priority-wrap { margin-bottom: 10px; }
-    .priority-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
-    .priority-label { font-size: 10px; color: #3a3a3a; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 500; }
-    .priority-val { font-size: 14px; font-weight: 500; color: #fff; }
-    .bar-bg { height: 4px; background: #1e1e1e; border-radius: 2px; }
-    .bar-fg { height: 4px; border-radius: 2px; transition: width .6s cubic-bezier(.4,0,.2,1); }
+    /* ── Priority ───────────────────────────────────────────────────────── */
+    .priority-wrap { margin-bottom: 14px; }
+    .priority-top { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 9px; }
+    .priority-label {
+      font-size: 9px; color: var(--txt-3); text-transform: uppercase; letter-spacing: .17em;
+      font-weight: 600; font-family: 'IBM Plex Mono', monospace;
+    }
+    .priority-val {
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 21px; font-weight: 800; color: var(--txt); letter-spacing: -.04em;
+      font-variant-numeric: tabular-nums;
+    }
+    .bar-bg {
+      height: 6px; background: rgba(0,0,0,.45); border-radius: 99px;
+      overflow: hidden; border: 1px solid var(--line);
+    }
+    .bar-fg {
+      height: 100%; border-radius: 99px; position: relative;
+      transition: width 1.1s var(--quiet);
+      box-shadow: 0 0 12px -1px currentColor;
+    }
 
-    /* Recommendation */
+    /* ── Recommendation ─────────────────────────────────────────────────── */
     .rec-box {
-      background: #0f0f0f; border: 0.5px solid #1e1e1e;
-      border-left: 2px solid #185FA5; border-radius: 0 8px 8px 0; padding: 10px 13px;
+      background: linear-gradient(100deg, rgba(82,222,99,.085), rgba(82,222,99,.02) 60%, transparent);
+      border: 1px solid var(--line);
+      border-left: 2px solid var(--accent);
+      border-radius: 0 var(--r-md) var(--r-md) 0; padding: 13px 16px;
     }
-    .rec-label { font-size: 10px; font-weight: 600; color: #185FA5; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 5px; }
-    .rec-text  { font-size: 12px; color: #555; line-height: 1.7; }
-    .override-note { font-size: 11px; color: #252525; margin-top: 8px; text-align: center; }
+    .rec-label {
+      font-size: 9px; font-weight: 600; color: var(--accent-soft); letter-spacing: .18em;
+      text-transform: uppercase; margin-bottom: 7px; font-family: 'IBM Plex Mono', monospace;
+    }
+    .rec-text { font-size: 12.5px; color: var(--txt-2); line-height: 1.8; }
+    .override-note { font-size: 10.5px; color: var(--txt-4); margin-top: 12px; text-align: center; }
 
-    /* Tabs */
-    .tabs { display: flex; gap: 4px; margin-bottom: 1rem; background: #0f0f0f; border-radius: 8px; padding: 3px; }
-    .tab {
-      flex: 1; text-align: center; font-size: 12px; padding: 6px;
-      border-radius: 6px; cursor: pointer; color: #3f3f3f;
-      transition: all .15s; font-family: 'Inter', sans-serif; border: none; background: none;
+    /* ── Tabs ───────────────────────────────────────────────────────────── */
+    .tabs {
+      display: flex; gap: 4px; margin-bottom: 1.2rem;
+      background: rgba(0,0,0,.32); border: 1px solid var(--line);
+      border-radius: 12px; padding: 4px;
     }
-    .tab.active { background: #141414; color: #d4d4d4; font-weight: 500; border: 0.5px solid #1e1e1e; }
+    .tab {
+      flex: 1; text-align: center; font-size: 12.5px; padding: 9px;
+      border-radius: 9px; cursor: pointer; color: var(--txt-3);
+      font-family: inherit; font-weight: 500; border: 1px solid transparent; background: none;
+      transition: color .45s var(--quiet), background .55s var(--quiet), border-color .45s var(--quiet);
+    }
+    .tab:hover { color: var(--txt-2); }
+    .tab.active {
+      background: linear-gradient(180deg, rgba(255,252,240,.11), rgba(255,252,240,.045));
+      color: var(--txt); font-weight: 600; border-color: var(--line-2);
+    }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
-    /* Task list */
-    .task-list { display: flex; flex-direction: column; gap: 6px; }
+    /* ── Task list ──────────────────────────────────────────────────────── */
+    .task-list { display: flex; flex-direction: column; gap: 8px; }
     .task-item {
-      background: #0f0f0f; border: 0.5px solid #1e1e1e; border-radius: 8px;
-      padding: 10px 12px; display: flex; align-items: center; gap: 10px; transition: border-color .15s;
+      background: var(--surface); border: 1px solid var(--line);
+      border-radius: 14px; padding: 12px 13px;
+      display: flex; align-items: center; gap: 12px;
+      position: relative; overflow: hidden;
+      transition: border-color .5s var(--quiet), background .5s var(--quiet),
+                  transform .55s var(--quiet), box-shadow .55s var(--quiet);
+      animation: settle .7s var(--quiet) backwards;
     }
-    .task-item:hover { border-color: #2a2a2a; }
+    .task-item:nth-child(1){animation-delay:.05s} .task-item:nth-child(2){animation-delay:.12s}
+    .task-item:nth-child(3){animation-delay:.19s} .task-item:nth-child(4){animation-delay:.26s}
+    .task-item:nth-child(5){animation-delay:.33s} .task-item:nth-child(n+6){animation-delay:.4s}
+
+    /* Status gradients — exactly as they were. */
+    .task-item::before {
+      content: ''; position: absolute; inset: 0; pointer-events: none; opacity: .9;
+    }
+    .task-item:has(.badge-high)::before   { background: linear-gradient(270deg, rgba(251,113,133,.17), transparent 42%); }
+    .task-item:has(.badge-medium)::before { background: linear-gradient(270deg, rgba(251,191,36,.14),  transparent 42%); }
+    .task-item:has(.badge-low)::before    { background: linear-gradient(270deg, rgba(52,211,153,.12),  transparent 42%); }
+
+    .task-item:hover {
+      border-color: var(--line-2); background: var(--surface-2);
+      transform: translateY(-2px); box-shadow: var(--shadow-lift);
+    }
+    .task-item > * { position: relative; }
+
     .task-rank {
-      width: 22px; height: 22px; border-radius: 50%;
+      width: 24px; height: 24px; border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      font-size: 11px; font-weight: 500; flex-shrink: 0;
+      font-size: 10.5px; font-weight: 700; flex-shrink: 0;
+      font-family: 'IBM Plex Mono', monospace; border: 1px solid transparent;
     }
-    .rank-1 { background: #2a1212; color: #e74c3c; }
-    .rank-2 { background: #2a1e10; color: #e67e22; }
-    .rank-3 { background: #0f2040; color: #185FA5; }
-    .rank-n { background: #1a1a1a; color: #3f3f3f; }
-    .task-name { font-size: 13px; font-weight: 500; color: #ccc; }
-    .task-meta { font-size: 11px; color: #333; margin-top: 2px; }
-    .task-badge { font-size: 10px; font-weight: 500; padding: 2px 9px; border-radius: 10px; flex-shrink: 0; margin-left: auto; }
-    .badge-high   { background: #2a1212; color: #e74c3c; border: 0.5px solid #3a1515; }
-    .badge-medium { background: #2a1e10; color: #e67e22; border: 0.5px solid #3a2510; }
-    .badge-low    { background: #0f2a1a; color: #27ae60; border: 0.5px solid #102a1a; }
+    .rank-1 { background: rgba(251,113,133,.16); color: var(--hi);  border-color: rgba(251,113,133,.34); box-shadow: 0 0 13px -4px rgba(251,113,133,.7); }
+    .rank-2 { background: rgba(251,191,36,.15);  color: var(--med); border-color: rgba(251,191,36,.32); }
+    .rank-3 { background: rgba(82,222,99,.14);   color: var(--accent); border-color: rgba(82,222,99,.3); }
+    .rank-n { background: rgba(255,252,240,.05); color: var(--txt-3); border-color: var(--line); }
+
+    /* The rank badge is also the checkbox: number normally, tick on hover,
+       tick held once the task is done. */
+    .task-check {
+      width: 24px; height: 24px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10.5px; font-weight: 700; flex-shrink: 0;
+      font-family: 'IBM Plex Mono', monospace;
+      border: 1px solid transparent; background: none; padding: 0;
+      cursor: pointer; position: relative; color: inherit;
+      transition: transform .45s var(--quiet), background .4s var(--quiet), border-color .4s var(--quiet);
+    }
+    .task-check .n    { transition: opacity .3s var(--quiet); }
+    .task-check .tick { position: absolute; width: 13px; height: 13px; opacity: 0; transition: opacity .3s var(--quiet); }
+    .task-check:hover { transform: scale(1.12); }
+    .task-check:hover .n    { opacity: 0; }
+    .task-check:hover .tick { opacity: .95; }
+
+    /* Finished: the row steps back, the status gradient stops shouting. */
+    .task-item.done { opacity: .4; }
+    .task-item.done:hover { opacity: .72; }
+    .task-item.done::before { opacity: 0; }
+    .task-item.done .task-name {
+      text-decoration: line-through;
+      text-decoration-color: var(--txt-4);
+      color: var(--txt-3);
+    }
+    .task-item.done .task-check {
+      background: rgba(82,222,99,.15); border-color: rgba(82,222,99,.36); color: var(--accent);
+    }
+    .task-item.done .task-check .n    { opacity: 0; }
+    .task-item.done .task-check .tick { opacity: 1; }
+    .task-item.done .task-check:hover .tick { opacity: .45; }
+
+    .done-sep {
+      font-family: 'IBM Plex Mono', monospace; font-size: 8.5px; font-weight: 600;
+      letter-spacing: .19em; text-transform: uppercase; color: var(--txt-4);
+      margin: 14px 0 2px; display: flex; align-items: center; gap: 10px;
+    }
+    .done-sep::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+
+    .task-name { font-size: 13px; font-weight: 600; color: var(--txt); letter-spacing: -.01em; }
+    .task-meta {
+      font-size: 10.5px; color: var(--txt-3); margin-top: 3px;
+      font-family: 'IBM Plex Mono', monospace;
+    }
+    .task-badge {
+      font-size: 9px; font-weight: 700; padding: 4px 10px; border-radius: 20px;
+      flex-shrink: 0; margin-left: auto; letter-spacing: .1em; text-transform: uppercase;
+      font-family: 'IBM Plex Mono', monospace;
+    }
+    .badge-high   { background: rgba(251,113,133,.14); color: var(--hi);  border: 1px solid rgba(251,113,133,.32); }
+    .badge-medium { background: rgba(251,191,36,.13);  color: var(--med); border: 1px solid rgba(251,191,36,.30); }
+    .badge-low    { background: rgba(52,211,153,.12);  color: var(--low); border: 1px solid rgba(52,211,153,.28); }
+
     .task-del {
-      background: none; border: none; color: #252525; cursor: pointer;
-      font-size: 16px; padding: 0 2px; border-radius: 4px; transition: color .15s; flex-shrink: 0; line-height: 1;
+      background: none; border: none; color: var(--txt-4); cursor: pointer;
+      font-size: 17px; width: 24px; height: 24px; border-radius: 8px;
+      flex-shrink: 0; line-height: 1; display: flex; align-items: center; justify-content: center;
+      transition: color .4s var(--quiet), background .4s var(--quiet), transform .55s var(--quiet);
     }
-    .task-del:hover { color: #e74c3c; }
+    .task-del:hover { color: var(--hi); background: rgba(251,113,133,.12); transform: rotate(90deg); }
 
-    /* Schedule */
-    .schedule-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 0.5px solid #1a1a1a; }
+    /* ── Schedule ───────────────────────────────────────────────────────── */
+    .schedule-row {
+      display: flex; align-items: center; gap: 13px; padding: 12px 3px;
+      border-bottom: 1px solid var(--line); border-radius: 7px;
+      transition: background .45s var(--quiet), padding-left .5s var(--quiet);
+    }
     .schedule-row:last-child { border-bottom: none; }
-    .schedule-time { font-size: 12px; color: #333; min-width: 60px; }
-    .schedule-task { font-size: 13px; color: #bbb; flex: 1; }
-    .schedule-dur  { font-size: 12px; color: #333; }
-    .schedule-break { color: #252525 !important; }
+    .schedule-row:hover { background: var(--surface); padding-left: 9px; }
+    .schedule-time {
+      font-size: 11px; color: var(--accent); min-width: 70px; font-weight: 600;
+      font-family: 'IBM Plex Mono', monospace;
+    }
+    .schedule-task { font-size: 12.5px; color: var(--txt-2); flex: 1; }
+    .schedule-dur { font-size: 11px; color: var(--txt-3); font-family: 'IBM Plex Mono', monospace; }
+    .schedule-break { color: var(--txt-4) !important; font-style: italic; }
 
-    /* Summary */
-    .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 1rem; }
-    .summary-card { background: #0f0f0f; border: 0.5px solid #1e1e1e; border-radius: 8px; padding: 10px; text-align: center; }
-    .summary-val { font-size: 22px; font-weight: 600; color: #fff; }
-    .summary-key { font-size: 10px; color: #333; margin-top: 3px; text-transform: uppercase; letter-spacing: 0.08em; }
+    /* ── Summary ────────────────────────────────────────────────────────── */
+    .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .summary-card {
+      background: var(--surface); border: 1px solid var(--line);
+      border-radius: var(--r-md); padding: 15px 10px; text-align: center;
+      transition: border-color .5s var(--quiet), transform .55s var(--quiet), background .5s var(--quiet);
+    }
+    .summary-card:hover { border-color: var(--line-2); transform: translateY(-2px); background: var(--surface-2); }
+    .summary-val {
+      font-family: 'Bricolage Grotesque', sans-serif;
+      font-size: 30px; font-weight: 800; color: var(--txt); line-height: 1;
+      letter-spacing: -.05em; font-variant-numeric: tabular-nums;
+    }
+    .summary-key {
+      font-size: 8.5px; color: var(--txt-3); margin-top: 8px; text-transform: uppercase;
+      letter-spacing: .19em; font-weight: 600; font-family: 'IBM Plex Mono', monospace;
+    }
 
-    /* Auth overlay */
+    .empty-state {
+      color: var(--txt-4); font-size: 12.5px; padding: 30px 0; text-align: center;
+      font-style: italic; line-height: 1.7;
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       Auth — you're outside the shop, looking in.
+       ═══════════════════════════════════════════════════════════════════════ */
     #auth-overlay {
-      position: fixed; inset: 0; background: #0a0a0a;
-      display: flex; align-items: center; justify-content: center; z-index: 100;
+      position: fixed; inset: 0; z-index: 100;
+      display: grid; grid-template-columns: 1.06fr .94fr;
+      background: var(--bg); overflow-y: auto;
     }
+
+    .auth-brand {
+      position: relative; overflow: hidden;
+      padding: 3.6rem 3.4rem;
+      display: flex; flex-direction: column; justify-content: space-between;
+      border-right: 1px solid var(--line);
+    }
+    /* The window: lamp inside, green sign, rain over it, dark at the edges */
+    .auth-brand::before {
+      content: ''; position: absolute; inset: 0;
+      background:
+        radial-gradient(80% 62% at 14% -4%, rgba(255,198,122,.16), transparent 62%),
+        radial-gradient(62% 50% at 88% 16%, rgba(82,222,99,.15), transparent 64%),
+        radial-gradient(120% 90% at 40% 60%, transparent 30%, rgba(5,6,3,.72) 92%);
+    }
+    .auth-brand > * { position: relative; z-index: 1; }
+
+    .brand-mark { display: flex; align-items: center; gap: 13px; }
+    .brand-mark .logo { width: 34px; height: 34px; cursor: default; }
+    .brand-mark span {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11.5px; font-weight: 600; letter-spacing: .34em; color: var(--txt-2);
+    }
+
+    .brand-copy h2 {
+      font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+      font-size: clamp(36px, 4.3vw, 58px); font-weight: 800; color: var(--txt);
+      line-height: 1.0; letter-spacing: -.05em; margin-bottom: 1.2rem; text-wrap: balance;
+    }
+    .brand-copy h2 em { font-style: normal; font-weight: 400; color: var(--accent); }
+    .brand-copy p { font-size: 15px; color: var(--txt-2); line-height: 1.75; max-width: 40ch; }
+
+    .brand-stats { display: flex; gap: 2.6rem; }
+    .brand-stat .k {
+      font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800;
+      font-size: 29px; color: var(--txt); line-height: 1; letter-spacing: -.05em;
+    }
+    .brand-stat .v {
+      font-family: 'IBM Plex Mono', monospace; font-size: 9px; color: var(--txt-3);
+      text-transform: uppercase; letter-spacing: .18em; margin-top: 8px; font-weight: 600;
+    }
+
+    .auth-panel { display: flex; align-items: center; justify-content: center; padding: 3rem 2rem; }
     .auth-card {
-      background: #141414; border: 0.5px solid #1e1e1e; border-radius: 16px;
-      padding: 2rem; width: 100%; max-width: 360px;
+      width: 100%; max-width: 392px;
+      animation: settle 1s var(--quiet) backwards; animation-delay: .15s;
     }
-    .auth-logo {
-      width: 42px; height: 42px; background: #185FA5; border-radius: 12px;
-      display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem;
+    .auth-card > .logo { margin: 0 auto 1.3rem; width: 40px; height: 40px; display: none; }
+    @media (max-width: 900px) { .auth-card > .logo { display: flex; } }
+
+    .auth-title {
+      font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+      text-align: center; font-size: 30px; font-weight: 800; color: var(--txt);
+      margin-bottom: 7px; letter-spacing: -.045em;
     }
-    .auth-logo svg { width: 22px; height: 22px; }
-    .auth-title { text-align: center; font-size: 18px; font-weight: 600; color: #fff; margin-bottom: 4px; }
-    .auth-sub   { text-align: center; font-size: 12px; color: #3f3f3f; margin-bottom: 1.5rem; }
+    .auth-sub {
+      text-align: center; font-size: 9.5px; color: var(--txt-3); margin-bottom: 2rem;
+      font-family: 'IBM Plex Mono', monospace;
+      letter-spacing: .2em; text-transform: uppercase; font-weight: 500;
+    }
     .field-input {
-      width: 100%; background: #0f0f0f; border: 0.5px solid #252525;
-      color: #d4d4d4; font-family: 'Inter', sans-serif; font-size: 13px;
-      padding: 10px 12px; border-radius: 8px; outline: none;
-      margin-bottom: 8px; transition: border-color .2s; display: block;
+      width: 100%; font-size: 13.5px; padding: 13px 15px;
+      border-radius: var(--r-md); margin-bottom: 10px; display: block;
     }
-    .field-input:focus { border-color: #185FA5; }
-    .auth-err  { font-size: 12px; color: #e74c3c; text-align: center; margin-top: 8px; min-height: 16px; }
+    .auth-err { font-size: 12px; color: var(--hi); text-align: center; margin-top: 11px; min-height: 17px; }
     .auth-form { display: none; }
-    .auth-form.active { display: block; }
-    .field-err { font-size: 11px; color: #e74c3c; min-height: 14px; margin: -2px 0 6px 2px; }
-    .pw-reqs { display: none; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
+    .auth-form.active { display: block; animation: settle .6s var(--quiet); }
+    .field-err { font-size: 11px; color: var(--hi); min-height: 15px; margin: -4px 0 6px 3px; }
+
+    .pw-reqs { display: none; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
     .pw-reqs.visible { display: flex; }
     .pw-req {
-      font-size: 10px; padding: 2px 8px; border-radius: 10px;
-      background: #1a1a1a; color: #3f3f3f; border: 0.5px solid #252525;
-      transition: background .2s, color .2s, border-color .2s;
+      font-size: 9px; padding: 4px 9px; border-radius: 20px;
+      background: var(--surface); color: var(--txt-3); border: 1px solid var(--line);
+      font-family: 'IBM Plex Mono', monospace; font-weight: 600; letter-spacing: .06em;
+      transition: background .5s var(--quiet), color .5s var(--quiet), border-color .5s var(--quiet);
     }
-    .pw-req.ok   { background: #0f2a1a; color: #27ae60; border-color: #1a3a25; }
-    .pw-req.fail { background: #2a0f0f; color: #e74c3c; border-color: #3a1515; }
+    .pw-req.ok   { background: rgba(52,211,153,.13); color: var(--low); border-color: rgba(52,211,153,.32); }
+    .pw-req.fail { background: rgba(251,113,133,.12); color: var(--hi); border-color: rgba(251,113,133,.3); }
+
+    @media (max-width: 900px) {
+      #auth-overlay { grid-template-columns: 1fr; }
+      .auth-brand { display: none; }
+      .auth-panel { min-height: 100vh; }
+    }
+
+    /* ── Toast — a note left on the counter ─────────────────────────────── */
+    .toast {
+      position: fixed; left: 50%; bottom: 36px; transform: translateX(-50%) translateY(14px);
+      background: rgba(12,14,10,.95); border: 1px solid var(--line-2);
+      color: var(--txt-2); font-size: 12px;
+      padding: 11px 19px; border-radius: 99px; z-index: 999;
+      box-shadow: var(--shadow-lift); backdrop-filter: blur(14px);
+      opacity: 0; pointer-events: none;
+      transition: opacity .7s var(--quiet), transform .8s var(--quiet);
+      font-family: 'IBM Plex Mono', monospace; letter-spacing: .05em;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* ── Motion off ─────────────────────────────────────────────────────── */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .01ms !important; animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+      }
+      .rain { display: none; }
+    }
+
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,252,240,.09); border-radius: 99px; border: 3px solid var(--bg); }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,252,240,.17); }
+    ::selection { background: rgba(82,222,99,.3); color: var(--txt); }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
   </style>
 </head>
 <body>
 
+  <div class="rain" aria-hidden="true"><span class="far"></span><span class="near"></span></div>
+  <canvas id="rain-canvas" aria-hidden="true"></canvas>
+  <div class="grain" aria-hidden="true"></div>
+
   <!-- ── Auth overlay ─────────────────────────────────────────────────────── -->
   <div id="auth-overlay">
-    <div class="auth-card">
-      <div class="auth-logo">
-        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="9 11 12 14 22 4"/>
-          <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
-        </svg>
+
+    <!-- Brand side -->
+    <aside class="auth-brand">
+      <div class="brand-mark">
+        <div class="logo"><svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect x="3" y="3" width="26" height="6.4" rx="3.2" fill="currentColor"/><rect x="3" y="12.8" width="26" height="6.4" rx="3.2" fill="currentColor" opacity=".66"/><rect x="3" y="22.6" width="26" height="6.4" rx="3.2" fill="currentColor" opacity=".34"/><rect x="3" y="3" width="6.4" height="16.2" rx="3.2" fill="currentColor"/><rect x="22.6" y="12.8" width="6.4" height="16.2" rx="3.2" fill="currentColor" opacity=".66"/></svg></div>
+        <span>SATM</span>
       </div>
-      <div class="auth-title">SATM</div>
-      <div class="auth-sub">Smart Academic Task Manager</div>
-      <div class="tabs" style="margin-bottom:1.25rem">
-        <button class="tab active" onclick="switchAuthTab('login',this)">Sign in</button>
-        <button class="tab" onclick="switchAuthTab('register',this)">Register</button>
+
+      <div class="brand-copy">
+        <h2>Everything you're<br />behind on, <em>in order.</em></h2>
+        <p>Write a task the way you'd say it out loud. Three models read it, agree on what
+           it is, how much it matters and how long it takes &mdash; then your day gets built
+           around the answer. No noise, no streaks, no badges to chase.</p>
       </div>
-      <div id="auth-login" class="auth-form active">
-        <input id="login-email"    class="field-input" type="email"    placeholder="Email"    autocomplete="email" />
-        <input id="login-password" class="field-input" type="password" placeholder="Password" autocomplete="current-password" />
-        <button id="login-btn" class="btn" style="margin-top:4px" onclick="doLogin()">Sign in</button>
+
+      <div class="brand-stats">
+        <div class="brand-stat"><div class="k">3</div><div class="v">models voting</div></div>
+        <div class="brand-stat"><div class="k">1,000</div><div class="v">tasks trained</div></div>
+        <div class="brand-stat"><div class="k">9</div><div class="v">predictions</div></div>
       </div>
-      <div id="auth-register" class="auth-form">
-        <input id="reg-email" class="field-input" type="email" placeholder="Email" autocomplete="email" oninput="liveEmailCheck()" onblur="liveEmailCheck(true)" />
-        <div class="field-err" id="err-email"></div>
-        <input id="reg-password" class="field-input" type="password" placeholder="Password" autocomplete="new-password" oninput="livePasswordCheck()" />
-        <div class="pw-reqs" id="pw-reqs">
-          <span class="pw-req" id="pr-len">8+ characters</span>
-          <span class="pw-req" id="pr-up">uppercase</span>
-          <span class="pw-req" id="pr-low">lowercase</span>
-          <span class="pw-req" id="pr-num">number</span>
-          <span class="pw-req" id="pr-sp">special char</span>
+    </aside>
+
+    <!-- Form side -->
+    <div class="auth-panel">
+      <div class="auth-card">
+        <div class="logo"><svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect x="3" y="3" width="26" height="6.4" rx="3.2" fill="currentColor"/><rect x="3" y="12.8" width="26" height="6.4" rx="3.2" fill="currentColor" opacity=".66"/><rect x="3" y="22.6" width="26" height="6.4" rx="3.2" fill="currentColor" opacity=".34"/><rect x="3" y="3" width="6.4" height="16.2" rx="3.2" fill="currentColor"/><rect x="22.6" y="12.8" width="6.4" height="16.2" rx="3.2" fill="currentColor" opacity=".66"/></svg></div>
+        <div class="auth-title">Take a seat</div>
+        <div class="auth-sub">Smart Academic Task Manager</div>
+
+        <div class="tabs" style="margin-bottom:1.4rem">
+          <button class="tab active" onclick="switchAuthTab('login',this)">Sign in</button>
+          <button class="tab" onclick="switchAuthTab('register',this)">Register</button>
         </div>
-        <button id="reg-btn" class="btn" style="margin-top:4px" onclick="doRegister()">Create account</button>
+
+        <div id="auth-login" class="auth-form active">
+          <input id="login-email"    class="field-input" type="email"    placeholder="Email"    autocomplete="email" />
+          <input id="login-password" class="field-input" type="password" placeholder="Password" autocomplete="current-password" />
+          <button id="login-btn" class="btn" style="margin-top:6px" onclick="doLogin()">Sign in</button>
+        </div>
+
+        <div id="auth-register" class="auth-form">
+          <input id="reg-email" class="field-input" type="email" placeholder="Email" autocomplete="email" oninput="liveEmailCheck()" onblur="liveEmailCheck(true)" />
+          <div class="field-err" id="err-email"></div>
+          <input id="reg-password" class="field-input" type="password" placeholder="Password" autocomplete="new-password" oninput="livePasswordCheck()" />
+          <div class="pw-reqs" id="pw-reqs">
+            <span class="pw-req" id="pr-len">8+ characters</span>
+            <span class="pw-req" id="pr-up">uppercase</span>
+            <span class="pw-req" id="pr-low">lowercase</span>
+            <span class="pw-req" id="pr-num">number</span>
+            <span class="pw-req" id="pr-sp">special char</span>
+          </div>
+          <button id="reg-btn" class="btn" style="margin-top:6px" onclick="doRegister()">Create account</button>
+        </div>
+
+        <div id="auth-err" class="auth-err"></div>
       </div>
-      <div id="auth-err" class="auth-err"></div>
     </div>
   </div>
 
@@ -292,15 +813,10 @@
   <div class="app" id="main-app" style="display:none">
 
     <div class="header">
-      <div class="logo">
-        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="9 11 12 14 22 4"/>
-          <path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/>
-        </svg>
-      </div>
+      <div class="logo" id="brand-logo" title="SATM"><svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><rect x="3" y="3" width="26" height="6.4" rx="3.2" fill="currentColor"/><rect x="3" y="12.8" width="26" height="6.4" rx="3.2" fill="currentColor" opacity=".66"/><rect x="3" y="22.6" width="26" height="6.4" rx="3.2" fill="currentColor" opacity=".34"/><rect x="3" y="3" width="6.4" height="16.2" rx="3.2" fill="currentColor"/><rect x="22.6" y="12.8" width="6.4" height="16.2" rx="3.2" fill="currentColor" opacity=".66"/></svg></div>
       <div>
-        <h1>Smart Academic Task Manager</h1>
-        <p>AI-powered task analysis &amp; scheduling</p>
+        <h1>SATM <em>· Task Manager</em></h1>
+        <p>Open late · 3 models on shift <span class="mode-flag" id="mode-flag"></span></p>
       </div>
       <div class="header-user">
         <span class="user-email" id="user-email"></span>
@@ -324,7 +840,7 @@
             <span class="dl-auto" id="dl-auto-badge">auto-detected</span>
           </div>
           <button id="analyze-btn" class="btn" onclick="analyze()">Analyze task</button>
-          <div id="analyze-err" style="font-size:11px;color:#e74c3c;margin-top:6px;min-height:14px;"></div>
+          <div id="analyze-err" style="font-size:11.5px;color:#FB7185;margin-top:8px;min-height:15px;"></div>
 
           <div class="result-box" id="res">
             <div class="divider"></div>
@@ -379,11 +895,11 @@
           </div>
           <div class="tab-content active" id="tab-tasks">
             <div class="task-list" id="tlist">
-              <div style="color:#2a2a2a;font-size:13px;padding:10px 0;">No tasks yet.</div>
+              <div class="empty-state">Nothing queued yet &mdash; analyze a task to begin.</div>
             </div>
           </div>
           <div class="tab-content" id="tab-schedule">
-            <div style="color:#2a2a2a;font-size:13px;padding:10px 0;">No tasks scheduled.</div>
+            <div class="empty-state">Your day opens up once tasks are added.</div>
           </div>
         </div>
 
@@ -392,7 +908,7 @@
           <div class="summary-grid">
             <div class="summary-card"><div class="summary-val" id="s-t">0</div><div class="summary-key">Tasks</div></div>
             <div class="summary-card"><div class="summary-val" id="s-h">0</div><div class="summary-key">Hours</div></div>
-            <div class="summary-card"><div class="summary-val" style="color:#e74c3c" id="s-u">0</div><div class="summary-key">Urgent</div></div>
+            <div class="summary-card"><div class="summary-val" style="color:#FB7185" id="s-u">0</div><div class="summary-key">Urgent</div></div>
           </div>
         </div>
       </div>
@@ -402,6 +918,247 @@
 
   <script>
     let currentUser = null;
+
+    // ── Weather ────────────────────────────────────────────────────────────────
+    // One canvas, two moods. Rain falls in randomised streaks; motes drift up
+    // through the light when the queue is clear. Every particle carries its own
+    // size, speed and opacity and is re-seeded on exit, so neither loops.
+    const Rain = (function () {
+      const cvs = document.getElementById('rain-canvas');
+      const ctx = cvs.getContext('2d');
+      const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      let W = 0, H = 0, dpr = 1, parts = [], beads = [], raf = null, target = 0, mode = 'rain';
+
+      const rand = (a, b) => a + Math.random() * (b - a);
+
+      function resize() {
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        W = cvs.width  = Math.floor(innerWidth  * dpr);
+        H = cvs.height = Math.floor(innerHeight * dpr);
+        cvs.style.width  = innerWidth  + 'px';
+        cvs.style.height = innerHeight + 'px';
+      }
+
+      // A falling drop. `seed` spreads the first batch over the whole frame so
+      // rain doesn't arrive as a curtain dropping from the top edge.
+      function drop(seed) {
+        const speed = rand(6, 17) * dpr;
+        return {
+          x: rand(-0.1 * W, 1.1 * W),
+          y: seed ? rand(0, H) : rand(-0.35 * H, -8),
+          len: rand(7, 26) * dpr,
+          spd: speed,
+          drift: speed * rand(0.12, 0.24),
+          wid: (Math.random() < 0.18 ? rand(1.3, 1.9) : rand(0.6, 1.1)) * dpr,
+          a: rand(0.08, 0.42)
+        };
+      }
+
+      // A speck of dust caught in the light, rising and swaying.
+      function mote(seed) {
+        return {
+          x: rand(0, W),
+          y: seed ? rand(0, H) : H + rand(4, 0.25 * H),
+          r: rand(0.7, 2.6) * dpr,
+          spd: rand(0.12, 0.62) * dpr,
+          sway: rand(6, 26) * dpr,
+          rate: rand(0.004, 0.016),
+          phase: rand(0, Math.PI * 2),
+          a: rand(0.10, 0.52)
+        };
+      }
+
+      // A bead clinging to the glass, sliding slowly.
+      function bead(seed) {
+        return {
+          x: rand(0, W), y: seed ? rand(0, H) : rand(-0.2 * H, -10),
+          r: rand(0.9, 2.2) * dpr,
+          spd: rand(0.25, 1.1) * dpr,
+          tail: rand(10, 46) * dpr,
+          a: rand(0.05, 0.16)
+        };
+      }
+
+      const make = seed => (mode === 'motes' ? mote(seed) : drop(seed));
+
+      function frame() {
+        ctx.clearRect(0, 0, W, H);
+
+        // Ease the population toward the target so a change reads as the weather
+        // turning rather than a switch being flipped.
+        if (parts.length < target)      parts.push(make(parts.length === 0));
+        else if (parts.length > target) parts.splice(0, Math.max(1, (parts.length - target) >> 3));
+
+        const wantBeads = (mode === 'rain' && target > 0) ? Math.round(target * 0.06) : 0;
+        if (beads.length < wantBeads)      beads.push(bead(beads.length === 0));
+        else if (beads.length > wantBeads) beads.splice(0, 1);
+
+        ctx.lineCap = 'round';
+        for (const b of beads) {
+          ctx.strokeStyle = 'rgba(198,224,238,' + b.a + ')';
+          ctx.lineWidth = b.r * 2;
+          ctx.beginPath();
+          ctx.moveTo(b.x, b.y - b.tail);
+          ctx.lineTo(b.x, b.y);
+          ctx.stroke();
+          b.y += b.spd;
+          b.spd *= 1.006;                         // beads accelerate as they gather
+          if (b.y - b.tail > H) Object.assign(b, bead(false));
+        }
+
+        if (mode === 'motes') {
+          for (const m of parts) {
+            m.phase += m.rate;
+            const x = m.x + Math.sin(m.phase) * m.sway;
+            const g = ctx.createRadialGradient(x, m.y, 0, x, m.y, m.r * 3.4);
+            g.addColorStop(0, 'rgba(255,222,164,' + m.a + ')');
+            g.addColorStop(1, 'rgba(255,201,107,0)');
+            ctx.fillStyle = g;
+            ctx.beginPath();
+            ctx.arc(x, m.y, m.r * 3.4, 0, Math.PI * 2);
+            ctx.fill();
+            m.y -= m.spd;
+            if (m.y < -12) Object.assign(m, mote(false));
+          }
+        } else {
+          ctx.lineCap = 'butt';
+          for (const d of parts) {
+            ctx.strokeStyle = 'rgba(206,232,244,' + d.a + ')';
+            ctx.lineWidth = d.wid;
+            ctx.beginPath();
+            ctx.moveTo(d.x, d.y);
+            ctx.lineTo(d.x - d.drift * (d.len / d.spd), d.y - d.len);
+            ctx.stroke();
+            d.x -= d.drift; d.y += d.spd;
+            if (d.y - d.len > H || d.x < -0.15 * W) Object.assign(d, drop(false));
+          }
+        }
+
+        raf = (parts.length || beads.length) ? requestAnimationFrame(frame) : null;
+        if (!raf) ctx.clearRect(0, 0, W, H);
+      }
+
+      function run(nextMode, count) {
+        if (still) return;
+        if (nextMode !== mode) { mode = nextMode; parts = []; beads = []; }
+        target = count;
+        cvs.classList.toggle('on', target > 0);
+        if (target > 0 && !raf) raf = requestAnimationFrame(frame);
+      }
+
+      addEventListener('resize', () => { resize(); parts = []; beads = []; }, { passive: true });
+      document.addEventListener('visibilitychange', () => {            // don't burn battery
+        if (document.hidden && raf) { cancelAnimationFrame(raf); raf = null; }
+        else if (!document.hidden && target > 0 && !raf) raf = requestAnimationFrame(frame);
+      });
+      resize();
+
+      return {
+        set: level => run('rain', [0, 70, 300][level] || 0),   // 0 none · 1 ambient · 2 storm
+        motes: on  => run('motes', on ? 90 : 0),
+        get mode() { return mode; }
+      };
+    })();
+
+    function toast(msg) {
+      let t = document.querySelector('.toast');
+      if (!t) { t = document.createElement('div'); t.className = 'toast'; document.body.appendChild(t); }
+      t.textContent = msg;
+      requestAnimationFrame(() => t.classList.add('show'));
+      clearTimeout(t._h);
+      t._h = setTimeout(() => t.classList.remove('show'), 3400);
+    }
+
+    // ── Easter egg 1 · Rain ────────────────────────────────────────────────────
+    // The storm reaches the alley, and the whole room turns cold with it.
+    function ambientLevel() {
+      return document.getElementById('auth-overlay').style.display === 'none' ? 0 : 1;
+    }
+    // Whole-word test written without regex escapes: inside a JS string  is a
+    // backspace, not a word boundary, so a RegExp built that way silently never matches.
+    function saidWord(text, word) {
+      var t = String(text).toLowerCase(), buf = '', i, c;
+      for (i = 0; i <= t.length; i++) {
+        c = t.charAt(i);
+        if (c >= 'a' && c <= 'z') { buf += c; continue; }
+        if (buf === word) return true;
+        buf = '';
+      }
+      return false;
+    }
+
+    function setRain(on) {
+      document.body.classList.toggle('rain-mode', on);
+      Rain.set(on ? 2 : ambientLevel());
+      toast(on ? 'the rain came in' : 'the sky cleared');
+    }
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'r' && e.key !== 'R') return;
+      if (/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) return;
+      setRain(!document.body.classList.contains('rain-mode'));
+    });
+    document.addEventListener('input', function (e) {
+      if (e.target.id !== 'inp') return;
+      var raining = document.body.classList.contains('rain-mode');
+      if (saidWord(e.target.value, 'rain') && !raining)       setRain(true);
+      else if (saidWord(e.target.value, 'clear') && raining)  setRain(false);
+    });
+
+    // ── Easter egg 3 · All clear ───────────────────────────────────────────────
+    // Nothing left in the queue. The storm passes, the lamp warms into first
+    // light, and dust drifts up through it. Only fires if there was work to do.
+    var clearedOn = false;
+    function updateFlag() {
+      var flag = document.getElementById('mode-flag');
+      if (!flag) return;
+      flag.textContent = panicOn ? 'Panic mode' : (clearedOn ? 'All clear' : '');
+    }
+    function setCleared(on) {
+      if (on === clearedOn) return;
+      clearedOn = on;
+      document.body.classList.toggle('cleared', on);
+      if (on) {
+        if (document.body.classList.contains('rain-mode')) {   // the storm passed
+          document.body.classList.remove('rain-mode');
+        }
+        Rain.motes(true);
+        toast('everything is done — go outside');
+      } else {
+        Rain.motes(false);
+        Rain.set(ambientLevel());
+      }
+      updateFlag();
+    }
+
+    // ── Easter egg 2 · Panic mode ──────────────────────────────────────────────
+    // Arms itself once more than three things are genuinely urgent.
+    // P previews it; the next change to your task list hands control back.
+    var panicOn = false, panicForced = false;
+    var PANIC_AT = 5;                                   // urgent tasks needed to arm
+    function setPanic(on, forced, count) {
+      if (panicForced && !forced) return;               // a preview outranks auto
+      if (forced) panicForced = true;
+      if (on === panicOn) return;
+      panicOn = on;
+      document.body.classList.toggle('panic', on);
+      updateFlag();
+      if (on) toast('panic mode activated — ' + (count || PANIC_AT) + ' things are urgent');
+      else toast('panic mode off — you are back under control');
+    }
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'p' && e.key !== 'P') return;
+      if (/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) return;
+      setPanic(!panicOn, true, PANIC_AT);
+    });
+
+    console.log(
+      '%cSATM%c\n' +
+      '%cA small shop at the end of the alley. Open late.\n\n' +
+      'R  — let the rain in; or write "rain" / "clear" in the task box\n' +
+      'P  — preview panic mode (it arms itself at 5 urgent tasks)',
+      'font:800 30px system-ui;color:#52DE63;letter-spacing:-1.5px', '',
+      'font:12px ui-monospace,monospace;color:#A2AE9A;line-height:1.7'
+    );
 
     // ── Deadline auto-detection ────────────────────────────────────────────────
     const _DL_WORD = {one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,a:1,an:1};
@@ -468,12 +1225,14 @@
     function showApp() {
       document.getElementById('auth-overlay').style.display = 'none';
       document.getElementById('main-app').style.display = 'block';
+      if (!document.body.classList.contains('rain-mode')) Rain.set(0);
       document.getElementById('user-email').textContent = currentUser;
     }
 
     function showAuth() {
-      document.getElementById('auth-overlay').style.display = 'flex';
+      document.getElementById('auth-overlay').style.display = 'grid';
       document.getElementById('main-app').style.display = 'none';
+      if (!document.body.classList.contains('rain-mode')) Rain.set(1);
     }
 
     // ── Auth ───────────────────────────────────────────────────────────────────
@@ -592,32 +1351,69 @@
 
     function dlStr(d) { return d === 1 ? 'today' : d === 2 ? 'tomorrow' : d + ' days'; }
 
+    // The rank badge doubles as the check control: it shows the priority number,
+    // swaps to a tick on hover, and stays ticked once the task is done.
+    const TICK_SVG = '<svg class="tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12.5 10 17.5 19 6.5"/></svg>';
+
+    async function toggleDone(id, wasDone) {
+      const res = await fetch('/api/tasks/' + id, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: wasDone ? 'todo' : 'done' })
+      });
+      if (res.status === 401) { showAuth(); return; }
+      loadTasks();
+    }
+
     function renderTasks(tasks) {
-      const sorted = [...tasks].sort((a, b) => calcPriority(b.deadline, b.importance) - calcPriority(a.deadline, a.importance));
-      const rankCls  = i => ['rank-1','rank-2','rank-3'][i] || 'rank-n';
-      const badgeCls = { high:'badge-high', medium:'badge-medium', low:'badge-low' };
-      const badgeLbl = { high:'High', medium:'Medium', low:'Low' };
+      const isDone = t => t.status === 'done';
+      const byPri  = (a, b) => calcPriority(b.deadline, b.importance) - calcPriority(a.deadline, a.importance);
+      const open   = tasks.filter(t => !isDone(t)).sort(byPri);
+      const done   = tasks.filter(isDone);
 
-      document.getElementById('tlist').innerHTML = sorted.length
-        ? sorted.map((t, i) => `
-            <div class="task-item">
-              <div class="task-rank ${rankCls(i)}">${i + 1}</div>
+      const rankCls  = i => ['rank-1', 'rank-2', 'rank-3'][i] || 'rank-n';
+      const badgeCls = { high: 'badge-high', medium: 'badge-medium', low: 'badge-low' };
+      const badgeLbl = { high: 'High', medium: 'Medium', low: 'Low' };
+
+      const row = (t, rank) => `
+            <div class="task-item${isDone(t) ? ' done' : ''}">
+              <button class="task-check ${rank ? rankCls(rank - 1) : 'rank-n'}"
+                      onclick="toggleDone(${t.id}, ${isDone(t)})"
+                      aria-pressed="${isDone(t)}"
+                      title="${isDone(t) ? 'Move back to the queue' : 'Mark as done'}">
+                <span class="n">${rank || ''}</span>${TICK_SVG}
+              </button>
               <div style="flex:1">
-                <div class="task-name">${esc(t.task_text.slice(0,50))}</div>
-                <div class="task-meta">${esc(t.category||'—')} · ${dlStr(t.deadline||3)} · ${t.time_est||'?'} hrs</div>
+                <div class="task-name">${esc(t.task_text.slice(0, 50))}</div>
+                <div class="task-meta">${esc(t.category || '—')} · ${dlStr(t.deadline || 3)} · ${t.time_est || '?'} hrs</div>
               </div>
-              <span class="task-badge ${badgeCls[t.importance]||'badge-medium'}">${badgeLbl[t.importance]||esc(t.importance)}</span>
+              <span class="task-badge ${badgeCls[t.importance] || 'badge-medium'}">${badgeLbl[t.importance] || esc(t.importance)}</span>
               <button class="task-del" onclick="deleteTask(${t.id})" title="Remove">×</button>
-            </div>`).join('')
-        : '<div style="color:#2a2a2a;font-size:13px;padding:10px 0;">No tasks yet.</div>';
+            </div>`;
 
-      const urg = tasks.filter(t => t.deadline <= 2 || t.importance === 'high').length;
-      const hrs = tasks.reduce((s, t) => s + (t.time_est || 0), 0);
-      document.getElementById('s-t').textContent = tasks.length;
+      let html = open.map((t, i) => row(t, i + 1)).join('');
+      if (done.length) {
+        html += `<div class="done-sep">Done · ${done.length}</div>` + done.map(t => row(t, null)).join('');
+      }
+      document.getElementById('tlist').innerHTML =
+        html || '<div class="empty-state">Nothing queued yet — analyze a task to begin.</div>';
+
+      // Summary, schedule and panic all describe the work still ahead of you,
+      // so finishing a task genuinely lightens the load rather than just hiding it.
+      const urg = open.filter(t => t.deadline <= 2 || t.importance === 'high').length;
+      const hrs = open.reduce((s, t) => s + (t.time_est || 0), 0);
+      document.getElementById('s-t').textContent = open.length;
       document.getElementById('s-h').textContent = Number.isInteger(hrs) ? hrs : hrs.toFixed(1);
       document.getElementById('s-u').textContent = urg;
 
-      renderSchedule(sorted);
+      panicForced = false;             // a real list change reclaims control
+      setPanic(urg >= 5, false, urg);
+      setCleared(tasks.length > 0 && open.length === 0);
+
+      // 0 urgent shouldn't still be shouting in red
+      document.getElementById('s-u').style.color = urg ? '#FB7185' : '';
+
+      renderSchedule(open);
     }
 
     function renderSchedule(sorted) {
@@ -637,7 +1433,7 @@
         t += mins; sessionMins += mins;
       });
       document.getElementById('tab-schedule').innerHTML = html
-        || '<div style="color:#2a2a2a;font-size:13px;padding:10px 0;">No tasks scheduled.</div>';
+        || '<div class="empty-state">Your day opens up once tasks are added.</div>';
     }
 
     async function deleteTask(id) {
@@ -667,8 +1463,11 @@
           const confident = count === 3;
           el.textContent = confident ? '3/3 agree' : '2/3 agree';
           el.style.display    = 'inline-block';
-          el.style.background = confident ? 'rgba(39,174,96,0.18)' : 'rgba(230,126,34,0.18)';
-          el.style.color      = confident ? '#27ae60' : '#e67e22';
+          el.style.background   = confident ? 'rgba(52,211,153,0.13)' : 'rgba(251,191,36,0.13)';
+          el.style.color        = confident ? '#34D399' : '#FBBF24';
+          el.style.border       = '1px solid ' + (confident ? 'rgba(52,211,153,0.32)' : 'rgba(251,191,36,0.30)');
+          el.style.fontFamily   = "'JetBrains Mono', ui-monospace, monospace";
+          el.style.letterSpacing= '0.05em';
         }
         if (data.cat_agree != null) setAgreeBadge(document.getElementById('r-cat-agree'), data.cat_agree);
         if (data.imp_agree != null) setAgreeBadge(document.getElementById('r-imp-agree'), data.imp_agree);
@@ -678,14 +1477,16 @@
           const stable = data.time_spread <= 0.5;
           spreadEl.textContent    = stable ? 'models agree' : `±${data.time_spread} hr spread`;
           spreadEl.style.display  = 'inline-block';
-          spreadEl.style.background = stable ? 'rgba(39,174,96,0.18)' : 'rgba(230,126,34,0.18)';
-          spreadEl.style.color      = stable ? '#27ae60' : '#e67e22';
+          spreadEl.style.background   = stable ? 'rgba(52,211,153,0.13)' : 'rgba(251,191,36,0.13)';
+          spreadEl.style.color        = stable ? '#34D399' : '#FBBF24';
+          spreadEl.style.border       = '1px solid ' + (stable ? 'rgba(52,211,153,0.32)' : 'rgba(251,191,36,0.30)');
+          spreadEl.style.fontFamily   = "'JetBrains Mono', ui-monospace, monospace";
         } else {
           spreadEl.style.display = 'none';
         }
 
         const pri = calcPriority(deadline, data.importance);
-        const col = pri >= 75 ? '#e74c3c' : pri >= 50 ? '#e67e22' : '#27ae60';
+        const col = pri >= 75 ? '#FB7185' : pri >= 50 ? '#FBBF24' : '#34D399';
         document.getElementById('r-pri').textContent = pri + '/100';
         document.getElementById('r-bar').style.cssText = `width:${pri}%;background:${col}`;
         document.getElementById('r-rec').textContent =
