@@ -1,9 +1,3 @@
-databases:
-  - name: satm-db
-    databaseName: satm
-    user: satm
-    plan: free
-
 services:
   - type: web
     name: satm
@@ -15,7 +9,7 @@ services:
         generateValue: true
       - key: PYTHON_VERSION
         value: 3.11.0
+      # Neon PostgreSQL connection string.
+      # sync: false = set this in the Render dashboard, never commit it.
       - key: DATABASE_URL
-        fromDatabase:
-          name: satm-db
-          property: connectionString
+        sync: false
