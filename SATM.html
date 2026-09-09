@@ -72,6 +72,7 @@
       background: var(--bg);
       color: var(--txt);
       min-height: 100vh;
+      min-height: 100dvh;          /* phone chrome shouldn't count as page height */
       padding: 2.75rem 1.25rem 5rem;
       line-height: 1.55;
       -webkit-font-smoothing: antialiased;
@@ -264,8 +265,11 @@
     }
     @keyframes breathe { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
 
-    .header-user { margin-left: auto; display: flex; align-items: center; gap: 13px; flex-shrink: 0; }
-    .user-email { font-size: 11px; color: var(--txt-3); font-family: 'IBM Plex Mono', monospace; }
+    .header-user { margin-left: auto; display: flex; align-items: center; gap: 13px; flex-shrink: 0; min-width: 0; }
+    .user-email {
+      font-size: 11px; color: var(--txt-3); font-family: 'IBM Plex Mono', monospace;
+      min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
     .btn-logout {
       font-size: 11.5px; color: var(--txt-2); font-family: inherit; font-weight: 500;
       background: var(--surface); border: 1px solid var(--line);
@@ -556,7 +560,10 @@
     }
     .done-sep::after { content: ''; flex: 1; height: 1px; background: var(--line); }
 
-    .task-name { font-size: 13px; font-weight: 600; color: var(--txt); letter-spacing: -.01em; }
+    /* The name column has to be allowed to shrink, or a long task pushes the
+       badge and the delete button off the row. */
+    .task-item > div { min-width: 0; }
+    .task-name { font-size: 13px; font-weight: 600; color: var(--txt); letter-spacing: -.01em; overflow-wrap: anywhere; }
     .task-meta {
       font-size: 10.5px; color: var(--txt-3); margin-top: 3px;
       font-family: 'IBM Plex Mono', monospace;
@@ -672,8 +679,8 @@
       width: 100%; max-width: 392px;
       animation: settle 1s var(--quiet) backwards; animation-delay: .15s;
     }
+    /* Only needed if the brand mark above the form is gone; on phone it isn't. */
     .auth-card > .logo { margin: 0 auto 1.3rem; width: 40px; height: 40px; display: none; }
-    @media (max-width: 900px) { .auth-card > .logo { display: flex; } }
 
     .auth-title {
       font-family: 'Bricolage Grotesque', system-ui, sans-serif;
@@ -705,10 +712,86 @@
     .pw-req.ok   { background: rgba(52,211,153,.13); color: var(--low); border-color: rgba(52,211,153,.32); }
     .pw-req.fail { background: rgba(251,113,133,.12); color: var(--hi); border-color: rgba(251,113,133,.3); }
 
+    /* One column below 900px: the pitch stacks above the form rather than being
+       dropped. Hiding it left a phone visitor with a password box and no way to
+       tell what SATM is — the whole reason to sign up was desktop-only. */
     @media (max-width: 900px) {
-      #auth-overlay { grid-template-columns: 1fr; }
-      .auth-brand { display: none; }
-      .auth-panel { min-height: 100vh; }
+      #auth-overlay { grid-template-columns: 1fr; align-content: start; }
+      .auth-brand {
+        padding: 2.7rem 1.7rem 2.1rem;
+        gap: 1.5rem; justify-content: flex-start;
+        border-right: none; border-bottom: 1px solid var(--line);
+      }
+      .brand-copy h2 { font-size: clamp(28px, 7.6vw, 40px); margin-bottom: .9rem; }
+      .brand-copy p  { font-size: 13.5px; line-height: 1.7; max-width: none; }
+      .brand-stats   { gap: 1.9rem; }
+      .brand-stat .k { font-size: 23px; }
+      .brand-stat .v { font-size: 8.5px; margin-top: 6px; }
+
+      /* Not a full extra screen — the form should start just under the fold */
+      .auth-panel { min-height: auto; padding: 2.4rem 1.6rem 3rem; }
+    }
+
+    /* ═══════════════════════════════════════════════════════════════════════
+       Phone — below ~560px the header can no longer hold the title and the
+       account on one line, so the account drops to its own row instead of
+       being pushed off the screen and clipped by the body's overflow guard.
+       ═══════════════════════════════════════════════════════════════════════ */
+    @media (max-width: 560px) {
+      body { padding: 1.7rem .9rem 3.5rem; }
+
+      .header { flex-wrap: wrap; gap: 11px; margin-bottom: 1.7rem; padding-bottom: 1.1rem; }
+      .header h1 { font-size: 19px; }
+      .header p { font-size: 9px; letter-spacing: .15em; }
+      .header-user { margin-left: 0; width: 100%; justify-content: space-between; flex-shrink: 1; }
+
+      .panel { padding: 1.15rem; border-radius: var(--r-lg); }
+      .layout { gap: .9rem; }
+
+      /* Anything under 16px makes iOS zoom the page in on focus and stay there */
+      textarea, .field-input,
+      .deadline-row input[type="number"], .detected select { font-size: 16px; }
+      textarea { min-height: 92px; }
+      .deadline-row { flex-wrap: wrap; gap: 10px; }
+
+      /* 16px text plus the native select arrow needs the padding back */
+      .detected-grid { gap: 7px; }
+      .detected { padding: 10px 9px; }
+      .detected select { padding: 7px 4px; }
+
+      .summary-card { padding: 13px 6px; }
+      .summary-val { font-size: 25px; }
+      .summary-key { font-size: 8px; letter-spacing: .13em; }
+
+      .task-item { padding: 11px; gap: 10px; }
+      .task-badge { padding: 4px 8px; }
+
+      .auth-brand { padding: 2.2rem 1.1rem 1.7rem; gap: 1.2rem; }
+      .brand-mark span { font-size: 10.5px; letter-spacing: .28em; }
+      .brand-stats { gap: 1.4rem; }
+      .auth-panel { padding: 2.2rem 1.1rem 2.6rem; }
+      .auth-title { font-size: 26px; }
+    }
+
+    /* ── Touch ──────────────────────────────────────────────────────────────
+       No hover on a phone, so the tick that normally previews on hover would
+       never appear and the rank badge would read as a plain number. Tapping
+       still toggles; the badge just has to be big enough to hit — 24px is
+       under every platform's minimum. */
+    @media (hover: none) {
+      .task-check, .task-del { width: 34px; height: 34px; }
+      .task-check:hover { transform: none; }
+      .task-check:hover .n    { opacity: 1; }
+      .task-check:hover .tick { opacity: 0; }
+      .task-check:active { transform: scale(.9); }
+      .task-item.done .task-check:hover .tick { opacity: 1; }
+      .task-del { color: var(--txt-3); font-size: 19px; }
+
+      /* Lift-on-hover just sticks after a tap */
+      .task-item:hover { transform: none; box-shadow: none; background: var(--surface); }
+      .btn:hover { transform: none; }
+      .summary-card:hover { transform: none; }
+      .schedule-row:hover { padding-left: 3px; }
     }
 
     /* ── Toast — a note left on the counter ─────────────────────────────── */
