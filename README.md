@@ -159,4 +159,4 @@ The app is configured for [Render](https://render.com) with `render.yaml` for on
 
 ## License
 
-[MIT](LICENSE) — graduation project, Computer Science
+[MIT](LICENSE)
