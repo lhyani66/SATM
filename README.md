@@ -126,6 +126,7 @@ Copy `.env.example` to `.env` for local overrides:
 | `POST` | `/api/login` | — | Sign in |
 | `POST` | `/api/logout` | — | Sign out |
 | `GET` | `/api/me` | ✓ | Get current user |
+| `DELETE` | `/api/me` | ✓ | Delete the account and all its tasks |
 | `POST` | `/api/predict` | ✓ | Run ML prediction on a task |
 | `GET` | `/api/tasks` | ✓ | List all tasks |
 | `POST` | `/api/tasks` | ✓ | Save a task |

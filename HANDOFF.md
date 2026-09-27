@@ -266,6 +266,15 @@ into the app so behaviour matches.
 ← 401 (not logged in)
 ```
 
+**`DELETE /api/me`** — delete the account and every task on it, permanently.
+The App Store requires this to be reachable from inside the app (guideline
+5.1.1(v)). The current password must be sent back to confirm.
+```json
+→ { "password": "Strong!1" }
+← 200 { "message": "Account deleted" }
+← 403 { "error": "Incorrect password" }
+```
+
 **`POST /api/predict`** — the AI. Doesn't save anything.
 ```json
 → { "text": "finish bio hw ASAP exam tomorrow", "deadline": 1 }
