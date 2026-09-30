@@ -1,10 +1,10 @@
 """
-Proves the API works end to end: register → predict → save → tick → list.
+Proves the API works end to end: register → predict → save → tick → list → delete account.
 
     python smoke_test.py                       # against local server
     python smoke_test.py https://satm.onrender.com
 
-Standard library only. Creates a throwaway account each run.
+Standard library only. Creates a throwaway account each run and deletes it at the end.
 """
 import json, sys, time, urllib.request
 from http.cookiejar import CookieJar
@@ -54,5 +54,17 @@ assert s == 200, (s, r)
 s, _ = call('GET', '/api/me')
 assert s == 401, 'still logged in after logout'
 print('cleanup   ok')
+
+s, r = call('POST', '/api/login', {'email': email, 'password': 'Smoke!2026x'})
+assert s == 200, (s, r)
+s, r = call('DELETE', '/api/me', {'password': 'not-the-password'})
+assert s == 403, ('wrong password deleted the account', s, r)
+s, r = call('DELETE', '/api/me', {'password': 'Smoke!2026x'})
+assert s == 200, (s, r)
+s, _ = call('GET', '/api/me')
+assert s == 401, 'session survived account deletion'
+s, _ = call('POST', '/api/login', {'email': email, 'password': 'Smoke!2026x'})
+assert s == 401, 'deleted account can still log in'
+print('delete me ok')
 
 print(f'\nALL GOOD — {BASE} is working.')

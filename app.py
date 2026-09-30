@@ -210,6 +210,32 @@ def me():
     user = db.session.get(User, current_user_id())
     return jsonify({'email': user.email}), 200
 
+@app.route('/api/me', methods=['DELETE'])
+@require_auth
+def delete_me():
+    """Delete the logged-in account and everything attached to it.
+
+    The App Store requires any app with account creation to offer account
+    deletion from inside the app (guideline 5.1.1(v)), so this has to remove
+    the user for real, not just deactivate them. The password is re-checked
+    because the deletion is irreversible and a logged-in phone may not be in
+    its owner's hands.
+    """
+    user = db.session.get(User, current_user_id())
+    if not user:
+        session.clear()
+        return jsonify({'error': 'Not logged in'}), 401
+    password = (request.get_json(silent=True) or {}).get('password') or ''
+    if not check_password_hash(user.password, password):
+        return jsonify({'error': 'Incorrect password'}), 403
+    # Tasks have no cascade rule on the foreign key, so clear them first or the
+    # delete leaves orphan rows pointing at a user id that no longer exists.
+    Task.query.filter_by(user_id=user.id).delete()
+    db.session.delete(user)
+    db.session.commit()
+    session.clear()
+    return jsonify({'message': 'Account deleted'}), 200
+
 # ── Predict route ─────────────────────────────────────────────────────────────
 @app.route('/api/predict', methods=['POST'])
 @require_auth
