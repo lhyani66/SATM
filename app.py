@@ -1,7 +1,8 @@
 import os
 import re
+import secrets
 import string
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from functools import wraps
 
 import joblib
@@ -10,6 +11,8 @@ from flask import Flask, jsonify, request, send_from_directory, session
 from flask_sqlalchemy import SQLAlchemy
 from scipy.sparse import csr_matrix, hstack
 from werkzeug.security import check_password_hash, generate_password_hash
+
+import mailer
 
 import nltk
 for _resource, _path in [('stopwords', 'corpora/stopwords'),
@@ -47,12 +50,34 @@ app.secret_key = _secret
 
 db = SQLAlchemy(app)
 
+
+def _utcnow():
+    """UTC with the tzinfo stripped.
+
+    SQLite hands datetimes back naive whatever went in, so storing an aware one
+    and comparing it to `datetime.now(timezone.utc)` raises TypeError on local
+    dev while working on Postgres. Storing naive UTC everywhere behaves the same
+    on both.
+    """
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
 # ── Database tables ───────────────────────────────────────────────────────────
 class User(db.Model):
     id       = db.Column(db.Integer, primary_key=True)
     email    = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
     tasks    = db.relationship('Task', backref='user', lazy=True)
+
+# Reset codes are hashed like passwords: a leaked database should not hand
+# anyone a working code. One live row per user — asking for a code throws away
+# the previous one.
+class PasswordReset(db.Model):
+    id         = db.Column(db.Integer, primary_key=True)
+    user_id    = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    code_hash  = db.Column(db.String(200), nullable=False)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    attempts   = db.Column(db.Integer, nullable=False, default=0)
+    created_at = db.Column(db.DateTime, nullable=False, default=lambda: _utcnow())
 
 class Task(db.Model):
     id         = db.Column(db.Integer, primary_key=True)
@@ -203,6 +228,116 @@ def login():
 def logout():
     session.clear()
     return jsonify({'message': 'Logged out'}), 200
+
+# ── Password reset ────────────────────────────────────────────────────────────
+# A six-digit code emailed to the address on the account, typed back into the
+# app. No reset link, deliberately: a link has to reopen this specific app,
+# which needs Apple universal-link setup and fails quietly when it goes wrong.
+RESET_CODE_TTL_MIN   = 15
+RESET_MAX_ATTEMPTS   = 5
+RESET_RESEND_SECONDS = 60
+
+@app.route('/api/forgot-password', methods=['POST'])
+def forgot_password():
+    data  = request.get_json(silent=True) or {}
+    email = (data.get('email') or '').strip().lower()
+    if not email:
+        return jsonify({'error': 'Email is required'}), 400
+
+    # The same answer whether or not the address has an account. Any difference
+    # — wording, status, timing — turns this into a way to ask the server which
+    # email addresses are registered.
+    sent = jsonify({'message': 'If that email has an account, a reset code is on its way.'}), 200
+
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return sent
+
+    # No relay configured in production would mean promising an email that
+    # cannot arrive, so say it is unavailable instead of lying.
+    if not mailer.is_configured() and _db_url.startswith('postgresql://'):
+        return jsonify({'error': 'Password reset is unavailable right now.'}), 503
+
+    # One code a minute per account: enough to recover from a mistyped address,
+    # not enough to use this endpoint to post mail at someone.
+    recent = (PasswordReset.query
+              .filter_by(user_id=user.id)
+              .order_by(PasswordReset.created_at.desc())
+              .first())
+    if recent and (_utcnow() - recent.created_at).total_seconds() < RESET_RESEND_SECONDS:
+        return sent
+
+    PasswordReset.query.filter_by(user_id=user.id).delete()
+    code = f'{secrets.randbelow(1_000_000):06d}'
+    db.session.add(PasswordReset(
+        user_id=user.id,
+        code_hash=generate_password_hash(code),
+        expires_at=_utcnow() + timedelta(minutes=RESET_CODE_TTL_MIN),
+    ))
+    db.session.commit()
+
+    if mailer.is_configured():
+        try:
+            mailer.send_reset_code(user.email, code, RESET_CODE_TTL_MIN)
+        except Exception:
+            app.logger.exception('Reset code for %s could not be sent', user.email)
+            return jsonify({'error': 'The email could not be sent. Try again shortly.'}), 502
+    else:
+        # Local development with no relay: the log is the inbox, so the flow is
+        # testable end to end without signing up anywhere. Only ever reached on
+        # SQLite — the guard above stops this path in production.
+        app.logger.warning('SMTP not configured; reset code for %s is %s', user.email, code)
+
+    return sent
+
+@app.route('/api/reset-password', methods=['POST'])
+def reset_password():
+    data     = request.get_json(silent=True) or {}
+    email    = (data.get('email') or '').strip().lower()
+    code     = (data.get('code') or '').strip()
+    password = data.get('password') or ''
+    if not email or not code or not password:
+        return jsonify({'error': 'Email, code and new password are required'}), 400
+
+    # One message for every way of being wrong — unknown address, no code
+    # outstanding, expired, mistyped — so none of them can be told apart.
+    invalid = jsonify({'error': 'That code is wrong or has expired'}), 400
+
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return invalid
+
+    row = (PasswordReset.query
+           .filter_by(user_id=user.id)
+           .order_by(PasswordReset.created_at.desc())
+           .first())
+    if not row:
+        return invalid
+
+    if row.expires_at < _utcnow():
+        db.session.delete(row)
+        db.session.commit()
+        return invalid
+
+    # Five guesses, then the code is spent: a six-digit code is only strong
+    # while it cannot be tried a million times.
+    if row.attempts >= RESET_MAX_ATTEMPTS:
+        db.session.delete(row)
+        db.session.commit()
+        return jsonify({'error': 'Too many wrong codes. Ask for a new one.'}), 429
+
+    if not check_password_hash(row.code_hash, code):
+        row.attempts += 1
+        db.session.commit()
+        return invalid
+
+    user.password = generate_password_hash(password)
+    PasswordReset.query.filter_by(user_id=user.id).delete()
+    db.session.commit()
+    # Nothing is signed in here — the user proved the code, not the old
+    # password — so end this request's session and let them sign in fresh.
+    session.clear()
+    return jsonify({'message': 'Password updated'}), 200
 
 @app.route('/api/me', methods=['GET'])
 @require_auth
