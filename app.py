@@ -30,6 +30,13 @@ app = Flask(__name__)
 _db_url = os.environ.get('DATABASE_URL', 'sqlite:///satm.db')
 if _db_url.startswith('postgres://'):
     _db_url = _db_url.replace('postgres://', 'postgresql://', 1)
+# Name the driver instead of letting SQLAlchemy pick one. A bare postgresql://
+# URL meant psycopg2 until SQLAlchemy 2.1, which switched the default to psycopg
+# (v3) - a package we don't install, so boot died with ModuleNotFoundError the
+# first time a deploy picked up the new SQLAlchemy. psycopg2-binary is pinned in
+# requirements.txt; say so here and the default can move again without breaking.
+if _db_url.startswith('postgresql://'):
+    _db_url = _db_url.replace('postgresql://', 'postgresql+psycopg2://', 1)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = _db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
